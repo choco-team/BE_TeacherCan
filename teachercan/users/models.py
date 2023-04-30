@@ -8,7 +8,6 @@ from django.core.mail import send_mail
 
 
 class BaseUser(AbstractBaseUser, PermissionsMixin):
-
     email_validator = EmailValidator()
     nickname_validator = UnicodeUsernameValidator()
 
@@ -37,6 +36,11 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
     )
     realname = models.CharField(_("realname"), max_length=150, blank=True)
     
+    is_certificated = models.BooleanField(
+        _("certifacation"),
+        default=False,
+        help_text=_("Designates whether the user has been certificated"),
+    )  
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
@@ -68,3 +72,19 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Send an email to this user."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
+
+
+class School(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True)
+    code = models.PositiveIntegerField()
+    area = models.PositiveIntegerField()
+    address = models.CharField(max_length=150, blank=True, null=True)
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True)
+    # Django Tag-it 활용
+
+
+class UserDetail(models.Model):
+    bgTheme = models.PositiveIntegerField()
