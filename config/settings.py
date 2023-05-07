@@ -44,6 +44,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'teachercan.users',
+    'teachercan.students',
+    'teachercan.plans',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
