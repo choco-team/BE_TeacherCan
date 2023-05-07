@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import BaseUser
+from .models import User
 
 
 class BaseUserAdmin(UserAdmin):
-    model = BaseUser
+    model = User
     list_display = ("email", "is_staff", "is_active",)
     list_filter = ("email", "is_staff", "is_active",)
     fieldsets = (
@@ -25,4 +25,4 @@ class BaseUserAdmin(UserAdmin):
     ordering = ("email",)
 
 
-admin.site.register(BaseUser, BaseUserAdmin)
+admin.site.register(User, BaseUserAdmin)

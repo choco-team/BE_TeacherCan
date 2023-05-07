@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.mail import send_mail
 
 
-class BaseUser(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin):
     email_validator = EmailValidator()
     nickname_validator = UnicodeUsernameValidator()
 
