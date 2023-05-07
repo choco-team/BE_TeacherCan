@@ -81,10 +81,41 @@ class School(models.Model):
     address = models.CharField(max_length=150, blank=True, null=True)
 
 
-class Tag(models.Model):
-    name = models.CharField(max_length=100, blank=True, null=True)
-    # Django Tag-it 활용
+#TODO Django Taggit 활용 
+# class Tag(models.Model):
+#     name = models.CharField(max_length=100, blank=True, null=True)
+
+
+class News(models.Model):
+    keyword = models.CharField(max_length=100)
+
+
+## Link / HomeLink 합쳐도 괜찮음??
+class Link(models.Model):
+    title = models.CharField(max_length=100)
+    memo = models.TimeField(blank=True, null=True)
+    url = models.URLField(blank=True, null=True) ## 추가 : 추후 사용자가 생성도 가능??
+    is_home = models.BooleanField(default=False)
+
+
+class DDay(models.Model):
+    title = models.CharField(max_length=100)
+    date = models.DateField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class UserDetail(models.Model):
-    bgTheme = models.PositiveIntegerField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    bg_theme = models.PositiveIntegerField()
+    ## allergy : students 앱에 생성
+    #TODO tag : 추후 django taggit 적용
+    news = models.ManyToManyField(News)
+    links = models.ManyToManyField(Link)
+    agree_policy = models.BooleanField()
+    ## dday : DDay 모델 별도 생성
+    is_move_dday = models.BooleanField() ## 어떤 목적??
+    home_links = models.ManyToManyField(Link)
+    default_student_list_id = models.CharField() ## 어떤 목적??
+
+
+##TimeRecord를 전부 다 저장하는 것이 좋을까 / 가장 마지막 로그인만 저장하는 것이 좋을까?
