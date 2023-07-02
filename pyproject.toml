@@ -2,15 +2,21 @@
 name = "teachercan-back"
 version = "0.1.0"
 description = "TeacherCan Renewal"
-authors = ["Junbo Koh <cjsn92@gmail.com>"]
+authors = ["Choco-team <https://github.com/choco-team>"]
 readme = "README.md"
-packages = [{include = "teachercan_back"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 django = "^4.2"
-djangorestframework = "^3.14.0"
+django-environ = "^0.10.0"
+fastapi = "^0.98.0"
+uvicorn = "^0.22.0"
+sqlalchemy = "^2.0.17"
+pyjwt = "^2.7.0"
 
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
 
 [build-system]
 requires = ["poetry-core"]

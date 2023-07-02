@@ -1,90 +1,214 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    PermissionsMixin,
+    BaseUserManager,
+)
 from django.core.validators import EmailValidator
-from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.auth.validators import (
+    ASCIIUsernameValidator,
+    UnicodeUsernameValidator,
+)
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.mail import send_mail
 
 
-class BaseUser(AbstractBaseUser, PermissionsMixin):
+class School(models.Model):
+    code = models.CharField(max_length=10, null=False, primary_key=True)
+    area_code = models.CharField(max_length=10, null=False)
+    name = models.CharField(max_length=10, null=False)
+
+    def __str__(self):
+        return self.school_name
+
+
+class UserManager(BaseUserManager):
+    def _create_user(self, user_id, password, **extra_fields):
+        if not user_id:
+            raise ValueError("id를 입력해주세요.")
+        user = self.model(user_id=user_id, **extra_fields)
+        user.set_password(password)
+        user.save(using=self.db)
+        return user
+
+    def create_user(self, user_id=None, password=None, **extra_fields):
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(user_id, password, **extra_fields)
+
+    def create_superuser(self, user_id=None, password=None, **extra_fields):
+        extra_fields.setdefault("is_superuser", True)
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("is_superuser=True일 필요가 있습니다.")
+        return self._create_user(user_id, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
     email_validator = EmailValidator()
     nickname_validator = UnicodeUsernameValidator()
+    user_id_validator = ASCIIUsernameValidator()
 
+    user_id = models.CharField(
+        _("user id"),
+        db_index=True,
+        max_length=50,
+        null=False,
+        unique=True,
+        help_text=_("아이디를 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."),
+        validators=[user_id_validator],
+        error_messages={
+            "unique": _("해당 아이디는 다른 사람이 사용중입니다."),
+        },
+    )
+    social_id = models.CharField(max_length=50, null=True, blank=True)
     email = models.EmailField(
         _("email address"),
         unique=True,
-        help_text=_(
-            "이메일을 입력해주세요."
-        ),
+        null=True,
+        blank=True,
+        help_text=_("이메일을 입력해주세요."),
         validators=[email_validator],
         error_messages={
             "unique": _("이미 해당 이메일로 회원가입 되었습니다."),
         },
     )
-    username = models.CharField(
+    nickname = models.CharField(
         _("nickname"),
         max_length=50,
-        unique=True,
-        help_text=_(
-            "닉네임을 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."
-        ),
+        null=True,
+        blank=True,
+        help_text=_("닉네임을 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."),
         validators=[nickname_validator],
-        error_messages={
-            "unique": _("해당 닉네임은 다른 사람이 사용중입니다."),
-        },
     )
-    realname = models.CharField(_("realname"), max_length=150, blank=True)
-    
-    is_certificated = models.BooleanField(
-        _("certifacation"),
-        default=False,
-        help_text=_("Designates whether the user has been certificated"),
-    )  
-    is_staff = models.BooleanField(
-        _("staff status"),
-        default=False,
-        help_text=_("Designates whether the user can log into this admin site."),
-    )
-    is_active = models.BooleanField(
-        _("active"),
-        default=True,
-        help_text=_(
-            "Designates whether this user should be treated as active. "
-            "Unselect this instead of deleting accounts."
-        ),
-    )
-    date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
+    school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
+    is_male = models.BooleanField(null=True)
+    birthday = models.DateField(null=True, blank=True)
+    joined_at = models.DateTimeField(_("date joined"), default=timezone.now)
+    avatar_sgv = models.CharField(max_length=50, null=True)
+    is_active = models.BooleanField(default=True)
 
     objects = UserManager()
+    USERNAME_FIELD = "user_id"
+    REQUIRED_FIELDS = []
 
-    EMAIL_FIELD = "email"
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["email"]
+    class Meta:
+        verbose_name = _("user")
+        verbose_name_plural = _("users")
 
-    def __str__(self):
-        return self.username
-
-    def clean(self):
-        super().clean()
-        self.email = self.__class__.objects.normalize_email(self.email)
-
-    def email_user(self, subject, message, from_email=None, **kwargs):
-        """Send an email to this user."""
-        send_mail(subject, message, from_email, [self.email], **kwargs)
+    @property
+    def is_staff(self):
+        return self.is_superuser
 
 
-class School(models.Model):
-    name = models.CharField(max_length=100, blank=True, null=True)
-    code = models.PositiveIntegerField()
-    area = models.PositiveIntegerField()
-    address = models.CharField(max_length=150, blank=True, null=True)
+# class User(AbstractBaseUser, PermissionsMixin):
+#     email_validator = EmailValidator()
+#     nickname_validator = UnicodeUsernameValidator()
+
+#     email = models.EmailField(
+#         _("email address"),
+#         unique=True,
+#         help_text=_(
+#             "이메일을 입력해주세요."
+#         ),
+#         validators=[email_validator],
+#         error_messages={
+#             "unique": _("이미 해당 이메일로 회원가입 되었습니다."),
+#         },
+#     )
+#     username = models.CharField(
+#         _("nickname"),
+#         max_length=50,
+#         unique=True,
+#         help_text=_(
+#             "닉네임을 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."
+#         ),
+#         validators=[nickname_validator],
+#         error_messages={
+#             "unique": _("해당 닉네임은 다른 사람이 사용중입니다."),
+#         },
+#     )
+#     realname = models.CharField(_("realname"), max_length=150, blank=True)
+
+#     is_certificated = models.BooleanField(
+#         _("certifacation"),
+#         default=False,
+#         help_text=_("Designates whether the user has been certificated"),
+#     )
+#     is_staff = models.BooleanField(
+#         _("staff status"),
+#         default=False,
+#         help_text=_("Designates whether the user can log into this admin site."),
+#     )
+#     is_active = models.BooleanField(
+#         _("active"),
+#         default=True,
+#         help_text=_(
+#             "Designates whether this user should be treated as active. "
+#             "Unselect this instead of deleting accounts."
+#         ),
+#     )
+#     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
+
+#     objects = UserManager()
+
+#     EMAIL_FIELD = "email"
+#     USERNAME_FIELD = "username"
+#     REQUIRED_FIELDS = ["email"]
+
+#     def __str__(self):
+#         return self.username
+
+#     def clean(self):
+#         super().clean()
+#         self.email = self.__class__.objects.normalize_email(self.email)
+
+#     def email_user(self, subject, message, from_email=None, **kwargs):
+#         """Send an email to this user."""
+#         send_mail(subject, message, from_email, [self.email], **kwargs)
 
 
-class Tag(models.Model):
-    name = models.CharField(max_length=100, blank=True, null=True)
-    # Django Tag-it 활용
+# class School(models.Model):
+#     name = models.CharField(max_length=100, blank=True, null=True)
+#     code = models.PositiveIntegerField()
+#     area = models.PositiveIntegerField()
+#     address = models.CharField(max_length=150, blank=True, null=True)
 
 
-class UserDetail(models.Model):
-    bgTheme = models.PositiveIntegerField()
+# #TODO Django Taggit 활용
+# # class Tag(models.Model):
+# #     name = models.CharField(max_length=100, blank=True, null=True)
+
+
+# class News(models.Model):
+#     keyword = models.CharField(max_length=100)
+
+
+# ## Link / HomeLink 합쳐도 괜찮음??
+# class Link(models.Model):
+#     title = models.CharField(max_length=100)
+#     memo = models.TimeField(blank=True, null=True)
+#     url = models.URLField(blank=True, null=True) ## 추가 : 추후 사용자가 생성도 가능??
+#     is_home = models.BooleanField(default=False)
+
+
+# class DDay(models.Model):
+#     title = models.CharField(max_length=100)
+#     date = models.DateField()
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+# class UserDetail(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     bg_theme = models.PositiveIntegerField()
+#     ## allergy : students 앱에 생성
+#     #TODO tag : 추후 django taggit 적용
+#     news = models.ManyToManyField(News)
+#     links = models.ManyToManyField(Link)
+#     agree_policy = models.BooleanField(default=False)
+#     ## dday : DDay 모델 별도 생성
+#     is_move_dday = models.BooleanField(default=False) ## 어떤 목적??
+#     # home_links = models.ManyToManyField(Link)
+#     default_student_list_id = models.CharField(max_length=50, null=True) ## 어떤 목적??
+
+
+# ##TimeRecord를 전부 다 저장하는 것이 좋을까 / 가장 마지막 로그인만 저장하는 것이 좋을까?
