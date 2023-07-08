@@ -113,9 +113,11 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     db_user = crud.get_user(db, email=user.email)
     if db_user:
-        raise HTTPException(
-            status_code=400, detail={"result": False, "message": "이미 가입된 이메일입니다."}
+        return JSONResponse(
+            status_code=400, content={"result": False, "message": "이미 가입된 이메일입니다."}
         )
+
+    # password validation
     try:
         validate_password(user.password)
     except ValidationError as error:
@@ -124,24 +126,19 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
             message = f"{message} {error_message}"
         raise HTTPException(
             status_code=422,
-            detail={
-                "detail": [
-                    {
-                        "loc": ["body", "password"],
-                        "msg": message.lstrip(),
-                        "type": "value_error.password",
-                    }
-                ]
-            },
+            detail=[
+                {
+                    "loc": ["body", "password"],
+                    "msg": message.lstrip(),
+                    "type": "value_error.password",
+                }
+            ],
         )
 
-    # print(
-    #     crud.create_user(
-    #         db, email=user.email, password=user.password, nickname=user.nickname
-    #     )
-    # )
-
-    return {"result": True, "message": "회원가입이 완료되었습니다."}
+    if crud.create_user(db, user=user):
+        return {"result": True, "message": "회원가입이 완료되었습니다."}
+    else:
+        raise HTTPException(status_code=500)
 
 
 # 1.회원가입 - 3.로그인

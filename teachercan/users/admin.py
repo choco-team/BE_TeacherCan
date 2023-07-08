@@ -10,7 +10,14 @@ class SchoolInline(admin.TabularInline):
 
 class BaseUserAdmin(UserAdmin):
     model = User
-    list_display = ("id", "email", "is_superuser", "joined_at", "last_login")
+    list_display = (
+        "id",
+        "email",
+        "nickname",
+        "is_superuser",
+        "joined_at",
+        "last_login",
+    )
     list_filter = ("is_superuser",)
     fieldsets = (
         (
@@ -65,6 +72,7 @@ class BaseUserAdmin(UserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "email",
+                    "nickname",
                     "password1",
                     "password2",
                     "is_superuser",

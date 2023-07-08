@@ -63,14 +63,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(
         _("nickname"),
         db_index=True,
-        unique=True,
         max_length=50,
         null=False,
         help_text=_("닉네임을 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."),
         validators=[nickname_validator],
-        error_messages={
-            "unique": _("해당 닉네임은 이미 사용중입니다."),
-        },
     )
     school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
     is_male = models.BooleanField(null=True)
