@@ -23,10 +23,9 @@ class User(Base):
     __tablename__ = "users_user"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, nullable=False, unique=True, index=True)
+    email = Column(String, nullable=False, unique=True, index=True)
     social_id = Column(String)
     password = Column(String, nullable=False)
-    email = Column(String, unique=True)
     nickname = Column(String)
     school_id = Column(String, ForeignKey("users_school.code"))
     is_male = Column(Boolean)

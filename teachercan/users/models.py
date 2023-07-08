@@ -20,27 +20,27 @@ class School(models.Model):
     name = models.CharField(max_length=10, null=False)
 
     def __str__(self):
-        return self.school_name
+        return self.name
 
 
 class UserManager(BaseUserManager):
-    def _create_user(self, user_id, password, **extra_fields):
-        if not user_id:
-            raise ValueError("id를 입력해주세요.")
-        user = self.model(user_id=user_id, **extra_fields)
+    def _create_user(self, email, password, **extra_fields):
+        if not email:
+            raise ValueError("email를 입력해주세요.")
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self.db)
         return user
 
-    def create_user(self, user_id=None, password=None, **extra_fields):
+    def create_user(self, email=None, password=None, **extra_fields):
         extra_fields.setdefault("is_superuser", False)
-        return self._create_user(user_id, password, **extra_fields)
+        return self._create_user(email, password, **extra_fields)
 
-    def create_superuser(self, user_id=None, password=None, **extra_fields):
+    def create_superuser(self, email=None, password=None, **extra_fields):
         extra_fields.setdefault("is_superuser", True)
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("is_superuser=True일 필요가 있습니다.")
-        return self._create_user(user_id, password, **extra_fields)
+        return self._create_user(email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -48,37 +48,29 @@ class User(AbstractBaseUser, PermissionsMixin):
     nickname_validator = UnicodeUsernameValidator()
     user_id_validator = ASCIIUsernameValidator()
 
-    user_id = models.CharField(
-        _("user id"),
-        db_index=True,
-        max_length=50,
-        null=False,
-        unique=True,
-        help_text=_("아이디를 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."),
-        validators=[user_id_validator],
-        error_messages={
-            "unique": _("해당 아이디는 다른 사람이 사용중입니다."),
-        },
-    )
-    social_id = models.CharField(max_length=50, null=True, blank=True)
     email = models.EmailField(
         _("email address"),
+        db_index=True,
         unique=True,
-        null=True,
-        blank=True,
+        null=False,
         help_text=_("이메일을 입력해주세요."),
         validators=[email_validator],
         error_messages={
             "unique": _("이미 해당 이메일로 회원가입 되었습니다."),
         },
     )
+    social_id = models.CharField(max_length=50, null=True, blank=True)
     nickname = models.CharField(
         _("nickname"),
+        db_index=True,
+        unique=True,
         max_length=50,
-        null=True,
-        blank=True,
+        null=False,
         help_text=_("닉네임을 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."),
         validators=[nickname_validator],
+        error_messages={
+            "unique": _("해당 닉네임은 이미 사용중입니다."),
+        },
     )
     school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
     is_male = models.BooleanField(null=True)
@@ -88,7 +80,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
 
     objects = UserManager()
-    USERNAME_FIELD = "user_id"
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     class Meta:

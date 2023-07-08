@@ -9,18 +9,16 @@ from . import models, schemas
 
 
 # User
-def get_user(db: Session, user_id: str):
-    return db.query(models.User).filter(models.User.user_id == user_id).first()
+def get_user(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
 
 
-def create_user(db: Session, user_id: str, password: str, nickname: str):
+def create_user(db: Session, email: str, password: str, nickname: str):
     return make_password(password)
 
 
-def get_school(db: Session, school_code: str):
-    result = (
-        db.query(models.School).filter(models.School.school_code == school_code).first()
-    )
+def get_school(db: Session, code: str):
+    result = db.query(models.School).filter(models.School.code == code).first()
     print(result)
     return result
 

@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import (
     make_password,
     check_password,
@@ -8,7 +10,8 @@ from django.contrib.auth.hashers import (
 )
 import environ
 import jwt
-from fastapi import Depends, FastAPI, HTTPException, APIRouter
+from fastapi import Depends, FastAPI, HTTPException, APIRouter, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
@@ -19,7 +22,24 @@ env = environ.Env()
 env.read_env(env.str("ENV_PATH", ".env"))
 
 # django auth 사용을 위한 config
-settings.configure(SECRET_KEY=env("DJANGO_SECRET_KEY"))
+settings.configure(
+    SECRET_KEY=env("DJANGO_SECRET_KEY"),
+    USE_I18N=False,
+    AUTH_PASSWORD_VALIDATORS=[
+        {
+            "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        },
+        {
+            "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        },
+        {
+            "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        },
+        {
+            "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        },
+    ],
+)
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -40,41 +60,88 @@ user_router = APIRouter(prefix="/user", tags=["User"])
 
 
 # User
-# 1.회원가입 - 1.아이디 중복검사
+# 1.회원가입 - 1.이메일 중복검사
 @user_router.post(
-    "/auth/signup/validation", status_code=200, response_model=schemas.Result
+    "/auth/signup/validation",
+    status_code=200,
+    response_model=schemas.Result,
+    responses={
+        400: {
+            "model": schemas.Result,
+            "content": {
+                "application/json": {
+                    "example": {"result": False, "message": "error message"}
+                }
+            },
+        }
+    },
 )
-def is_id_usable(user: schemas.UserBase, db: Session = Depends(get_db)):
+def is_email_usable(user: schemas.UserBase, db: Session = Depends(get_db)):
     """
-    `아이디 중복검사`
+    `이메일 중복검사`
     """
-    db_user = crud.get_user(db, user_id=user.user_id)
+    db_user = crud.get_user(db, email=user.email)
     if db_user:
-        raise HTTPException(
-            status_code=400, detail={"result": False, "message": "이미 가입된 아이디입니다."}
+        return JSONResponse(
+            status_code=400, content={"result": False, "message": "이미 가입된 이메일입니다."}
         )
-    return {"result": True, "message": "회원가입이 가능한 아이디입니다."}
+        # raise HTTPException(
+        #     status_code=400, detail={"result": False, "message": "이미 가입된 이메일입니다."}
+        # )
+    return {"result": True, "message": "회원가입이 가능한 이메일입니다."}
 
 
 # 1.회원가입 - 2.회원가입
-@user_router.post("/auth/signup", status_code=200, response_model=schemas.Result)
+@user_router.post(
+    "/auth/signup",
+    status_code=200,
+    response_model=schemas.Result,
+    responses={
+        400: {
+            "model": schemas.Result,
+            "content": {
+                "application/json": {
+                    "example": {"result": False, "message": "error message"}
+                }
+            },
+        }
+    },
+)
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     `회원가입`
     """
-    db_user = crud.get_user(db, user_id=user.user_id)
+    db_user = crud.get_user(db, email=user.email)
     if db_user:
         raise HTTPException(
-            status_code=400, detail={"result": False, "message": "이미 가입된 아이디입니다."}
+            status_code=400, detail={"result": False, "message": "이미 가입된 이메일입니다."}
+        )
+    try:
+        validate_password(user.password)
+    except ValidationError as error:
+        message = ""
+        for error_message in error.messages:
+            message = f"{message} {error_message}"
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "detail": [
+                    {
+                        "loc": ["body", "password"],
+                        "msg": message.lstrip(),
+                        "type": "value_error.password",
+                    }
+                ]
+            },
         )
 
-    print(
-        crud.create_user(
-            db, user_id=user.user_id, password=user.password, nickname=user.nickname
-        )
-    )
+    # print(
+    #     crud.create_user(
+    #         db, email=user.email, password=user.password, nickname=user.nickname
+    #     )
+    # )
 
-    return {"result": True, "message": "회원가입이 가능한 아이디입니다."}
+    return {"result": True, "message": "회원가입이 완료되었습니다."}
 
 
 # 1.회원가입 - 3.로그인
@@ -83,14 +150,14 @@ def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
     """
     `로그인`
     """
-    db_user = crud.get_user(db, user_id=user.user_id)
+    db_user = crud.get_user(db, email=user.email)
     if db_user is None or not check_password(user.password, db_user.password):
         raise HTTPException(
             status_code=400, detail={"result": False, "message": "로그인에 실패하였습니다."}
         )
 
     token = jwt.encode(
-        {"user_id": user.user_id, "exp": datetime.utcnow() + timedelta(hours=24)},
+        {"email": user.email, "exp": datetime.utcnow() + timedelta(hours=24)},
         env("JWT_SECRET"),
         env("JWT_ALGORITHM"),
     )
