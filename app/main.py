@@ -10,7 +10,7 @@ from django.contrib.auth.hashers import (
 )
 import environ
 import jwt
-from fastapi import Depends, FastAPI, HTTPException, APIRouter, status
+from fastapi import Depends, FastAPI, HTTPException, APIRouter, status, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -57,6 +57,11 @@ def get_db():
 
 
 user_router = APIRouter(prefix="/user", tags=["User"])
+
+# TODO 권한 검사 미들웨어 추가하기
+# middleware
+# @app.middleware("http")
+# async def check_access(request: Request, call_next):
 
 
 # User
