@@ -4,9 +4,20 @@ from django.contrib.auth.admin import UserAdmin
 from .models import User, School
 
 
+class SchoolInline(admin.TabularInline):
+    model = School
+
+
 class BaseUserAdmin(UserAdmin):
     model = User
-    list_display = ("id", "user_id", "is_superuser", "joined_at", "last_login")
+    list_display = (
+        "id",
+        "email",
+        "nickname",
+        "is_superuser",
+        "joined_at",
+        "last_login",
+    )
     list_filter = ("is_superuser",)
     fieldsets = (
         (
@@ -14,7 +25,7 @@ class BaseUserAdmin(UserAdmin):
             {
                 "fields": (
                     "id",
-                    "user_id",
+                    "email",
                 )
             },
         ),
@@ -23,14 +34,16 @@ class BaseUserAdmin(UserAdmin):
             {
                 "fields": (
                     "nickname",
-                    "email",
                     "social_id",
                     "is_male",
                     "birthday",
                 )
             },
         ),
-        ("School info", {"fields": ("school_code",)}),
+        (
+            "School info",
+            {"fields": ("school",)},
+        ),
         (
             "Permissions",
             {
@@ -58,7 +71,8 @@ class BaseUserAdmin(UserAdmin):
             {
                 "classes": ("wide",),
                 "fields": (
-                    "user_id",
+                    "email",
+                    "nickname",
                     "password1",
                     "password2",
                     "is_superuser",
@@ -68,7 +82,7 @@ class BaseUserAdmin(UserAdmin):
             },
         ),
     )
-    search_fields = ("user_id", "email")
+    search_fields = ("email",)
     ordering = ("id",)
     readonly_fields = ("id",)
 

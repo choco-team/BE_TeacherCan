@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 # User
@@ -15,7 +15,7 @@ class Token(Result):
 
 
 class UserBase(BaseModel):
-    user_id: str
+    email: EmailStr
 
 
 class UserSignin(UserBase):
@@ -29,7 +29,6 @@ class UserCreate(UserSignin):
 class User(UserBase):
     id: int
     social_id: Optional[str] = None
-    email: Optional[str] = None
     nickname: Optional[str] = None
     is_male: Optional[bool] = None
     birthday: Optional[date] = None
