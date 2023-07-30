@@ -1,3 +1,4 @@
+from typing import Annotated
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -8,11 +9,16 @@ from django.contrib.auth.hashers import (
     check_password,
     is_password_usable,
 )
+
+from fastapi import Depends, FastAPI, HTTPException, APIRouter, status, Request, Header
+from fastapi.responses import JSONResponse
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
+from sqlalchemy.orm import Session
+
 import environ
 import jwt
-from fastapi import Depends, FastAPI, HTTPException, APIRouter, status, Request
-from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -56,12 +62,54 @@ def get_db():
         db.close()
 
 
+# Router
 user_router = APIRouter(prefix="/user", tags=["User"])
 
-# TODO 권한 검사 미들웨어 추가하기
+# swagger ui 헤더에 jwt 추가를 위한 스키마
+auth_scheme = HTTPBearer()
+
+
 # middleware
-# @app.middleware("http")
-# async def check_access(request: Request, call_next):
+## 토큰 검증 미들웨어
+@app.middleware("http")
+async def check_access(request: Request, call_next):
+    path = request.url.path
+    except_path_list = [
+        "/",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/user/auth/signup/validation",
+        "/user/auth/signup",
+        "/user/auth/signin",
+    ]
+    key = request.headers.get("Authorization")
+    print(key)
+    if path in except_path_list:
+        ...
+    elif key:
+        key = key.replace("Bearer ", "")
+        print(jwt.decode(key, env("JWT_SECRET"), env("JWT_ALGORITHM")))
+        request.state.email = jwt.decode(key, env("JWT_SECRET"), env("JWT_ALGORITHM"))[
+            "email"
+        ]
+    else:
+        return JSONResponse(status_code=400, content={"message": "토큰 검증에 실패했습니다."})
+
+    response = await call_next(request)
+    return response
+
+
+## CORS 미들웨어
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["localhost"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+## TrustedHost 미들웨어
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
 
 
 # User
@@ -146,7 +194,7 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500)
 
 
-# 1.회원가입 - 3.로그인
+# 2.로그인 - 1.로그인
 @user_router.post("/auth/signin", status_code=200, response_model=schemas.Token)
 def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
     """
@@ -165,6 +213,15 @@ def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
     )
 
     return {"result": True, "message": "로그인 되었습니다.", "token": token}
+
+
+# 3.사용자 정보 조회 - 1.내 정보 조회
+@user_router.get("/info", status_code=200, response_model=schemas.User)
+async def my_info(
+    request: Request, db: Session = Depends(get_db), _: str = Depends(auth_scheme)
+):
+    db_user = crud.get_user(db, email=request.state.email)
+    return db_user
 
 
 # @app.post("/users/", response_model=schemas.User)
