@@ -19,6 +19,8 @@ from sqlalchemy.orm import Session
 
 import environ
 import jwt
+import requests
+import math
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -64,13 +66,15 @@ def get_db():
 
 # Router
 user_router = APIRouter(prefix="/user", tags=["User"])
+school_router = APIRouter(prefix="/school", tags=["School"])
+
 
 # swagger ui 헤더에 jwt 추가를 위한 스키마
 auth_scheme = HTTPBearer()
 
 
 # middleware
-## 토큰 검증 미들웨어
+# 토큰 검증 미들웨어
 @app.middleware("http")
 async def check_access(request: Request, call_next):
     path = request.url.path
@@ -82,6 +86,8 @@ async def check_access(request: Request, call_next):
         "/user/auth/signup/validation",
         "/user/auth/signup",
         "/user/auth/signin",
+        "/school/list",
+        "/school/lunch-menu"
     ]
     key = request.headers.get("Authorization")
     print(key)
@@ -100,7 +106,7 @@ async def check_access(request: Request, call_next):
     return response
 
 
-## CORS 미들웨어
+# CORS 미들웨어
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["localhost"],
@@ -108,8 +114,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-## TrustedHost 미들웨어
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
+# TrustedHost 미들웨어
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=[
+                   "127.0.0.1", "localhost"])
 
 
 # User
@@ -231,18 +238,6 @@ async def my_info(
 #         raise HTTPException(status_code=400, detail="Email already registered")
 #     return crud.create_user(db=db, user=user)
 
-
-@app.get("/school/{school_code}", response_model=schemas.School)
-def read_school(school_code: str, db: Session = Depends(get_db)):
-    db_school = crud.get_school(db, school_code=school_code)
-
-    password = "1234"
-    hashed_password = make_password(password)
-    print(check_password(password, hashed_password))
-    print(db_school.users)
-    return db_school
-
-
 @app.get("/userinfo/", response_model=list[schemas.User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = crud.get_users(db, skip=skip, limit=limit)
@@ -275,4 +270,80 @@ def read_user(user_id: str, db: Session = Depends(get_db)):
 #     db_user = crud.delete_user(db, user_id=user_id)
 #     return db_user
 
+
+# school
+niceKEY = env("NICE_API_KEY")
+niceURL = "https://open.neis.go.kr/hub"
+params = {"Type": "json", "KEY": niceKEY}
+# 1. 학교정보 - 1. 학교 정보 검색
+
+
+@school_router.get("/list", status_code=200, response_model=schemas.SchoolLists)
+async def schoolList(schoolName: str | None, pageNumber: int | None = 1, dataSize: int | None = 10):
+    nParams = params.copy()
+    nParams.update(
+        {"SCHUL_NM": schoolName, "pIndex": pageNumber, "pSize": dataSize})
+    response = requests.get(f"{niceURL}/schoolInfo", params=nParams).json()
+    schoolList = []
+    for school in response["schoolInfo"][1]["row"]:
+        schoolList.append({
+            "schoolName": school["SCHUL_NM"],
+            "schoolAddress": school["ORG_RDNMA"],
+            "schoolCode": school["SD_SCHUL_CODE"],
+            "areaCode": school["ATPT_OFCDC_SC_CODE"]
+        })
+    LTC = response["schoolInfo"][0]["head"][0]["list_total_count"]
+    totalPageNumber = math.ceil(LTC/dataSize)
+    return JSONResponse(status_code=200, content={
+        "schoolList": schoolList,
+        "pagination": {
+            "pageNumber": pageNumber,
+            "dataSize": dataSize,
+            "totalPageNumber": totalPageNumber,
+        }
+    }
+    )
+
+
+# 2. 급식정보 - 1. 급식 정보 조회
+def lunchMenuToDict(str):
+    splited = str.split(" ")
+    return {"menu": splited[0], "allergy": [] if not splited[1] else list(map(int, splited[1].strip("("")").split(".")))}
+
+
+def originToDict(str):
+    splited = str.split(" : ")
+    return {"ingredient": splited[0], "origin": splited[1]}
+
+
+@school_router.get("/lunch-menu", status_code=200, response_model=schemas.SchoolLunch)
+async def schoolLunch(areaCode: str | None, schoolCode: int | None, date: int | None):
+    nParams = params.copy()
+    nParams.update(
+        {"ATPT_OFCDC_SC_CODE": areaCode, "SD_SCHUL_CODE": schoolCode, "MLSV_YMD": date})
+    response = requests.get(
+        f"{niceURL}/mealServiceDietInfo", params=nParams).json()
+    row = response["mealServiceDietInfo"][1]["row"][0]
+    lunchMenu = list(map(lunchMenuToDict, row["DDISH_NM"].split("<br/>")))
+    origin = list(map(originToDict, row["ORPLC_INFO"].split("<br/>")))
+    return JSONResponse(status_code=200, content={
+        "lunchMenu": lunchMenu,
+        "origin": origin
+    })
+
+
+# 뭔지 모르겠지만 school_router로 가져왔습니다.
+
+
+@school_router.get("/{school_code}", response_model=schemas.School)
+def read_school(school_code: str, db: Session = Depends(get_db)):
+    db_school = crud.get_school(db, school_code=school_code)
+    password = "1234"
+    hashed_password = make_password(password)
+    print(check_password(password, hashed_password))
+    print(db_school.users)
+    return db_school
+
+
 app.include_router(user_router)
+app.include_router(school_router)

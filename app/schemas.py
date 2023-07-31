@@ -58,3 +58,36 @@ class School(BaseModel):
 
 class UserSchool(User):
     school: School = None
+
+
+class SchoolList(BaseModel):
+    schoolName: str
+    schoolAddress: str
+    schoolCode: str
+    areaCode: str
+
+
+class Pagination(BaseModel):
+    pageNumber: int
+    dataSize: int
+    totalPageNumber: int | None
+
+
+class SchoolLists(BaseModel):
+    schoollist: list[SchoolList] = None
+    pagination: Pagination
+
+
+class LunchMenu(BaseModel):
+    menu: str
+    allergy: list[int]
+
+
+class Origin(BaseModel):
+    ingredient: str
+    origin: str
+
+
+class SchoolLunch(BaseModel):
+    lunchMenu: list[LunchMenu]
+    origins: list[Origin]
