@@ -7,6 +7,17 @@ from .models import User, School
 class SchoolInline(admin.TabularInline):
     model = School
 
+class UserInline(admin.TabularInline):
+    model = User
+    extra = 1
+
+class SchoolAdmin(admin.ModelAdmin):
+    fieldsets = [
+        ("None", {"fields": ["code", "area_code", "name"]}),
+    ]
+    search_fields = ("name",)
+    inlines = [UserInline]
+
 
 class BaseUserAdmin(UserAdmin):
     model = User
@@ -17,6 +28,7 @@ class BaseUserAdmin(UserAdmin):
         "is_superuser",
         "joined_at",
         "last_login",
+        "school"
     )
     list_filter = ("is_superuser",)
     fieldsets = (
@@ -78,6 +90,7 @@ class BaseUserAdmin(UserAdmin):
                     "is_superuser",
                     "groups",
                     "user_permissions",
+                    "school"
                 ),
             },
         ),
@@ -88,4 +101,4 @@ class BaseUserAdmin(UserAdmin):
 
 
 admin.site.register(User, BaseUserAdmin)
-admin.site.register(School)
+admin.site.register(School, SchoolAdmin)
