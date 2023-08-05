@@ -1,17 +1,9 @@
-from typing import Annotated
-from datetime import datetime, timedelta
-
-from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.hashers import check_password
-
 from fastapi import Depends, HTTPException, APIRouter, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 import environ
-import jwt
 
 from .. import crud, schemas
 from ..dependencies import get_db
@@ -49,5 +41,4 @@ async def my_info(
     _: str = Depends(auth_scheme),
 ):
     db_user = crud.update_user(db, email=request.state.email, user=user)
-
     return db_user
