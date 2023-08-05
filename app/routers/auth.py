@@ -1,12 +1,8 @@
-from typing import Annotated
 from datetime import datetime, timedelta
 
-from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import check_password
 
 from fastapi import Depends, HTTPException, APIRouter, status
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 import environ
