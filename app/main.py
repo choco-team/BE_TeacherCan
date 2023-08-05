@@ -1,10 +1,9 @@
 from django.conf import settings
 
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 
 import environ
 
@@ -12,9 +11,7 @@ import jwt
 
 from . import models
 from .database import engine
-from .routers import school, user
-from . import crud, schemas
-from .dependencies import get_db
+from .routers import auth, user, school
 
 # 환경변수 init
 env = environ.Env()
@@ -54,18 +51,16 @@ async def check_access(request: Request, call_next):
         "/docs",
         "/redoc",
         "/openapi.json",
-        "/user/auth/signup/validation",
-        "/user/auth/signup",
-        "/user/auth/signin",
+        "/auth/signup/validation",
+        "/auth/signup",
+        "/auth/signin",
         "/school/list",
     ]
     key = request.headers.get("Authorization")
-    print(key)
     if path in except_path_list:
         ...
     elif key:
         key = key.replace("Bearer ", "")
-        print(jwt.decode(key, env("JWT_SECRET"), env("JWT_ALGORITHM")))
         request.state.email = jwt.decode(key, env("JWT_SECRET"), env("JWT_ALGORITHM"))[
             "email"
         ]
@@ -87,5 +82,6 @@ app.add_middleware(
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
 
 # router
+app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(school.router)
