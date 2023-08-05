@@ -52,6 +52,12 @@ def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
             status_code=400, detail={"result": False, "message": "Failed Login"}
         )
 
+    # Edit last_login
+    db_user = schemas.UserUpdate.from_orm(db_user)
+    db_user.last_login = datetime.utcnow()
+    crud.update_user(db, email=user.email, user=db_user)
+
+    # Create jwt
     token = jwt.encode(
         {"email": user.email, "exp": datetime.utcnow() + timedelta(hours=24)},
         env("JWT_SECRET"),

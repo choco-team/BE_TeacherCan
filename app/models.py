@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 
-class SchoolBase(Base):
+class School(Base):
     __tablename__ = "users_school"
 
     code = Column(String(100), primary_key=True, nullable=False, unique=True)
@@ -12,11 +12,6 @@ class SchoolBase(Base):
     name = Column(String(100), nullable=False)
 
     users = relationship("User", back_populates="school")
-
-
-class School(SchoolBase):
-    class Config:
-        orm_mode = True
 
 
 class User(Base):
