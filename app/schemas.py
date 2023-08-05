@@ -1,7 +1,9 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, ForwardRef
 
 from pydantic import BaseModel, EmailStr
+
+User = ForwardRef("User")
 
 
 # User
@@ -27,19 +29,26 @@ class UserCreate(UserSignin):
 
 
 class User(UserBase):
-    id: int
-    social_id: Optional[str] = None
-    nickname: Optional[str] = None
-    is_male: Optional[bool] = None
-    birthday: Optional[date] = None
-    last_login: Optional[datetime] = None
+    social_id: str | None = None
+    nickname: str | None = None
+    is_male: bool | None = None
+    birthday: date | None = None
+    last_login: datetime | None = None
     joined_at: datetime
-    avatar_sgv: Optional[str] = None
-    is_active: bool
-    is_superuser: bool
+    avatar_sgv: str | None = None
+    school: Optional["School"] = None
 
     class Config:
         orm_mode = True
+
+
+class UserUpdate(BaseModel):
+    social_id: str | None = ...
+    nickname: str | None = ...
+    is_male: bool | None = ...
+    birthday: date | None = ...
+    avatar_sgv: str | None = ...
+    school_code: str | None = ...
 
 
 class UserDelete(UserBase):
@@ -91,3 +100,6 @@ class Origin(BaseModel):
 class SchoolLunch(BaseModel):
     lunchMenu: list[LunchMenu]
     origins: list[Origin]
+
+
+User.update_forward_refs()
