@@ -6,3 +6,4 @@ django-environ
 PyJWT
 pydantic[email]
 requests
+pymysql

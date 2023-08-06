@@ -57,7 +57,7 @@ def update_user(db: Session, email: str, user: schemas.UserUpdate):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Token."
         )
-    print("Running update_user!! school_code =", user.school_code)
+    print("Running update_user!! school_code =", user.school_id)
     for field, value in user.dict().items():
         setattr(db_user, field, value)
     db.commit()

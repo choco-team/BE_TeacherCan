@@ -47,16 +47,23 @@ class UserUpdate(BaseModel):
     nickname: str | None = ...
     is_male: bool | None = ...
     birthday: date | None = ...
+    last_login: datetime | None = ...
     avatar_sgv: str | None = ...
-    school_code: str | None = ...
+    school_id: str | None = ...
+
+    class Config:
+        orm_mode = True
 
 
 class UserDelete(UserBase):
     pass
 
 
-class School(BaseModel):
+class SchoolBase(BaseModel):
     code: str
+
+
+class School(SchoolBase):
     area_code: str
     name: str
     # users: list[User] = []
