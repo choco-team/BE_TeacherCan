@@ -5,8 +5,16 @@ from sqlalchemy.orm import Session
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
+import environ
+import requests
+
 
 from . import models, schemas
+
+
+# env init
+env = environ.Env()
+env.read_env(env.str("ENV_PATH", ".env"))
 
 
 # User
@@ -57,6 +65,7 @@ def update_user(db: Session, email: str, user: schemas.UserUpdate):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Token."
         )
+
     print("Running update_user!! school_code =", user.school_id)
     for field, value in user.dict().items():
         setattr(db_user, field, value)
@@ -66,7 +75,49 @@ def update_user(db: Session, email: str, user: schemas.UserUpdate):
 
 
 # School
-def get_school(db: Session, code: str):
+NICE_URL = "https://open.neis.go.kr/hub"
+
+
+def search_schools(
+    name: str | None = None, page_number: int | None = 1, data_size: int | None = 10
+) -> list[schemas.SchoolList]:
+    params = {
+        "Type": "json",
+        "KEY": env("NICE_API_KEY"),
+        "SCHUL_NM": name,
+        "pindex": page_number,
+        "pSize": data_size,
+    }
+
+    try:
+        response = requests.get(f"{NICE_URL}/schoolInfo", params=params).json()[
+            "schoolInfo"
+        ]
+    except:
+        code = int(response["RESULT"]["CODE"].split("-")[1])
+        if (
+            code == 200 or code == 336
+        ):  # 200: 해당하는 데이터가 없습니다. / 336: 데이터요청은 한번에 최대 1,000건을 넘을 수 없습니다
+            raise HTTPException(
+                status_code=400,
+                detail={"code": 400, "message": response["RESULT"]["MESSAGE"]},
+            )
+        else:
+            raise HTTPException(
+                status_code=500, detail={"code": 500, "message": "내부 API호출 실패"}
+            )
+    schools = [schemas.SchoolList(**school) for school in response[1]["row"]]
+    total_page = (response[0]["head"][0]["list_total_count"] // data_size) + 1
+
+    return schemas.SchoolLists(
+        schoollist=schools,
+        pagination=schemas.Pagination(
+            pageNumber=page_number, dataSize=data_size, totalPageNumber=total_page
+        ),
+    )
+
+
+def get_school(db: Session, code: str | None = None):
     result = db.query(models.School).filter(models.School.code == code).first()
     print(result)
     return result

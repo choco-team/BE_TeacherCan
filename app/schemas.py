@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional, ForwardRef
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 User = ForwardRef("User")
 
@@ -77,10 +77,10 @@ class UserSchool(User):
 
 
 class SchoolList(BaseModel):
-    schoolName: str
-    schoolAddress: str
-    schoolCode: str
-    areaCode: str
+    schoolName: str = Field(alias="SCHUL_NM")
+    schoolAddress: str = Field(alias="ORG_RDNMA")
+    schoolCode: str = Field(alias="SD_SCHUL_CODE")
+    areaCode: str = Field(alias="ATPT_OFCDC_SC_CODE")
 
 
 class Pagination(BaseModel):
@@ -90,7 +90,7 @@ class Pagination(BaseModel):
 
 
 class SchoolLists(BaseModel):
-    schoollist: list[SchoolList] = None
+    schoollist: list[SchoolList] | None
     pagination: Pagination
 
 
