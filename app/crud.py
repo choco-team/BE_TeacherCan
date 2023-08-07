@@ -67,6 +67,7 @@ def update_user(db: Session, email: str, user: schemas.UserUpdate):
         )
 
     print("Running update_user!! school_code =", user.school_id)
+
     for field, value in user.dict().items():
         setattr(db_user, field, value)
     db.commit()
@@ -78,43 +79,24 @@ def update_user(db: Session, email: str, user: schemas.UserUpdate):
 NICE_URL = "https://open.neis.go.kr/hub"
 
 
-def search_schools(
-    name: str | None = None, page_number: int | None = 1, data_size: int | None = 10
+def api_search_schools(
+    name: str | None = None,
+    code: str | None = None,
+    page_number: int | None = 1,
+    data_size: int | None = 10,
 ) -> list[schemas.SchoolList]:
     params = {
         "Type": "json",
         "KEY": env("NICE_API_KEY"),
+        "SD_SCHUL_CODE": code,
         "SCHUL_NM": name,
         "pindex": page_number,
         "pSize": data_size,
     }
-
     try:
-        response = requests.get(f"{NICE_URL}/schoolInfo", params=params).json()[
-            "schoolInfo"
-        ]
+        return requests.get(f"{NICE_URL}/schoolInfo", params=params).json()
     except:
-        code = int(response["RESULT"]["CODE"].split("-")[1])
-        if (
-            code == 200 or code == 336
-        ):  # 200: 해당하는 데이터가 없습니다. / 336: 데이터요청은 한번에 최대 1,000건을 넘을 수 없습니다
-            raise HTTPException(
-                status_code=400,
-                detail={"code": 400, "message": response["RESULT"]["MESSAGE"]},
-            )
-        else:
-            raise HTTPException(
-                status_code=500, detail={"code": 500, "message": "내부 API호출 실패"}
-            )
-    schools = [schemas.SchoolList(**school) for school in response[1]["row"]]
-    total_page = (response[0]["head"][0]["list_total_count"] // data_size) + 1
-
-    return schemas.SchoolLists(
-        schoollist=schools,
-        pagination=schemas.Pagination(
-            pageNumber=page_number, dataSize=data_size, totalPageNumber=total_page
-        ),
-    )
+        raise HTTPException(status_code=500, detail="외부 api 에러")
 
 
 def get_school(db: Session, code: str | None = None):

@@ -29,22 +29,43 @@ params = {"Type": "json", "KEY": niceKEY}
 
 
 # 1. 학교정보 - 1. 학교 정보 검색
-def filterSchoolList(school):
-    return {
-        "schoolName": school["SCHUL_NM"],
-        "schoolAddress": school["ORG_RDNMA"],
-        "schoolCode": school["SD_SCHUL_CODE"],
-        "areaCode": school["ATPT_OFCDC_SC_CODE"],
-    }
-
-
-@router.get("/list", status_code=200, response_model=schemas.SchoolLists)
+@router.get("/list", status_code=200)  # , response_model=schemas.SchoolLists)
 # schoolName = None : 모든 학교를 ㄱㄴㄷ 순으로 응답
 async def schoolList(
     schoolName: str | None = None, pageNumber: int | None = 1, dataSize: int | None = 10
 ):
-    schools = crud.search_schools(schoolName, pageNumber, dataSize)
-    return schools
+    response = crud.api_search_schools(
+        name=schoolName, page_number=pageNumber, data_size=dataSize
+    )
+    try:
+        school_info = response["schoolInfo"]
+        total = int(school_info[0]["head"][0]["list_total_count"])
+        schools = [schemas.SchoolList(**school) for school in school_info[1]["row"]]
+        return {
+            "schoollist": schools,
+            "pagination": {
+                "pageNumber": pageNumber,
+                "dataSize": dataSize,
+                "totalPageNumber": -(-total // dataSize),
+            },
+        }
+    except:
+        code = int(response["RESULT"]["CODE"].split("-")[1])
+        # 200: 해당하는 데이터가 없습니다. / 336: 데이터요청은 한번에 최대 1,000건을 넘을 수 없습니다
+        if code == 200:
+            raise HTTPException(
+                status_code=404,
+                detail={"code": 404, "message": response["RESULT"]["MESSAGE"]},
+            )
+        elif code == 336:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": 400, "message": response["RESULT"]["MESSAGE"]},
+            )
+        else:
+            raise HTTPException(
+                status_code=500, detail={"code": 500, "message": "내부 API호출 실패"}
+            )
 
 
 # 2. 급식정보 - 1. 급식 정보 조회
