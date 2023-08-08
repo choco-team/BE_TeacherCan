@@ -144,3 +144,14 @@ def create_school(db: Session, code: str):
     db.add(db_school)
     db.commit()
     db.refresh(db_school)
+
+
+def create_student(db: Session, students:list[schemas.StudentCreate], user_id):
+    for student in students:
+        db_school = models.Student(
+            **student.dict(), 
+            user_id = user_id
+        )
+        db.add(db_school)
+        db.commit()
+        db.refresh(db_school)

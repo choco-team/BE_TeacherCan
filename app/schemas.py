@@ -5,8 +5,6 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 User = ForwardRef("User")
 
-
-# User
 class Result(BaseModel):
     result: bool
     message: str
@@ -15,6 +13,22 @@ class Result(BaseModel):
 class Token(Result):
     token: str
 
+#Student
+class StudentBase(BaseModel): 
+    num: int
+    name: str
+    ismale: bool
+
+class StudentCreate(StudentBase): 
+    pass    
+
+class Student(StudentBase):       
+    id: int                 
+    user_id: int
+    class Config:
+        orm_mode = True
+
+# User
 
 class UserBase(BaseModel):
     email: EmailStr

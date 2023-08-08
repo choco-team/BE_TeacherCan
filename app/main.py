@@ -11,7 +11,7 @@ import jwt
 
 from . import models
 from .database import engine
-from .routers import auth, user, school
+from .routers import auth, user, school, student
 
 # 환경변수 init
 env = environ.Env()
@@ -55,6 +55,7 @@ async def check_access(request: Request, call_next):
         "/auth/signup",
         "/auth/signin",
         "/school/list",
+        '/student/registrate'
     ]
     key = request.headers.get("Authorization")
     if path in except_path_list:
@@ -85,3 +86,4 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost
 app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(school.router)
+app.include_router(student.router)

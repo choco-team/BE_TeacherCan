@@ -32,3 +32,15 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
 
     school = relationship("School", back_populates="users")
+    students = relationship("Student", back_populates="user")
+
+class Student(Base):
+    __tablename__ = "users_student"
+
+    id = Column(Integer, primary_key=True, index=True)
+    num = Column(Integer, nullable=False)
+    name = Column(String(100), nullable=False)
+    ismale = Column(Boolean, nullable=False)
+    user_id =  Column(Integer, ForeignKey("users_user.id"))
+
+    user = relationship("User", back_populates="students")
