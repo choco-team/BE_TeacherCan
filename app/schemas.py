@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional, ForwardRef
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 User = ForwardRef("User")
 
@@ -38,8 +38,7 @@ class User(UserBase):
     avatar_sgv: str | None = None
     school: Optional["School"] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserUpdate(BaseModel):
@@ -51,8 +50,7 @@ class UserUpdate(BaseModel):
     avatar_sgv: str | None = ...
     school_id: str | None = ...
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserDelete(UserBase):
@@ -68,8 +66,7 @@ class School(SchoolBase):
     name: str
     # users: list[User] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserSchool(User):
@@ -77,10 +74,10 @@ class UserSchool(User):
 
 
 class SchoolList(BaseModel):
-    schoolName: str
-    schoolAddress: str
-    schoolCode: str
-    areaCode: str
+    schoolName: str = Field(alias="SCHUL_NM")
+    schoolAddress: str = Field(alias="ORG_RDNMA")
+    schoolCode: str = Field(alias="SD_SCHUL_CODE")
+    areaCode: str = Field(alias="ATPT_OFCDC_SC_CODE")
 
 
 class Pagination(BaseModel):
@@ -90,7 +87,7 @@ class Pagination(BaseModel):
 
 
 class SchoolLists(BaseModel):
-    schoollist: list[SchoolList] = None
+    schoollist: list[SchoolList] | None
     pagination: Pagination
 
 
