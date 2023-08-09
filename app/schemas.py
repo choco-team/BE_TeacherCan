@@ -106,4 +106,4 @@ class SchoolLunch(BaseModel):
     origins: list[Origin]
 
 
-User.update_forward_refs()
+User.model_rebuild()
