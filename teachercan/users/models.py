@@ -15,7 +15,7 @@ from django.core.mail import send_mail
 
 
 class School(models.Model):
-    code = models.CharField(max_length=10, null=False, primary_key=True)
+    code = models.CharField(max_length=10, null=False, primary_key=True, db_index=True)
     area_code = models.CharField(max_length=10, null=False)
     name = models.CharField(max_length=10, null=False)
 
