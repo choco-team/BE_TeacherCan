@@ -84,14 +84,3 @@ async def schoolLunch(
     return JSONResponse(
         status_code=200, content={"lunchMenu": lunchMenu, "origin": origin}
     )
-
-
-# school_code로 학교정보 가져오기? 아직 안쓰임. 미완성인듯?
-@router.get("/{school_code}", response_model=schemas.School)
-def read_school(school_code: str, db: Session = Depends(get_db)):
-    db_school = crud.get_school(db, school_code=school_code)
-    password = "1234"
-    hashed_password = make_password(password)
-    print(check_password(password, hashed_password))
-    print(db_school.users)
-    return db_school
