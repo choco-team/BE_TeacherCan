@@ -2,14 +2,9 @@ from fastapi import Depends, HTTPException, APIRouter, Request, status
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
-import environ
-
 from .. import crud, schemas
 from ..dependencies import get_db
 
-# 환경변수 init
-env = environ.Env()
-env.read_env(env.str("ENV_PATH", ".env"))
 
 router = APIRouter(prefix="/user", tags=["User"])
 

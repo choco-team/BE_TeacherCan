@@ -3,8 +3,6 @@ from typing import Optional, ForwardRef
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
-User = ForwardRef("User")
-
 
 # User
 class Result(BaseModel):
