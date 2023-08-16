@@ -5,15 +5,12 @@ from django.contrib.auth.hashers import check_password
 from fastapi import Depends, HTTPException, APIRouter, status
 from sqlalchemy.orm import Session
 
-import environ
 import jwt
 
 from .. import crud, schemas
 from ..dependencies import get_db
 
-# 환경변수 init
-env = environ.Env()
-env.read_env(env.str("ENV_PATH", ".env"))
+from ..common.consts import JWT_ALGORITHM, JWT_SECRET
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -53,15 +50,15 @@ def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
         )
 
     # Edit last_login
-    db_user = schemas.UserUpdate.from_orm(db_user)
+    db_user = schemas.UserUpdate.model_validate(db_user)
     db_user.last_login = datetime.utcnow()
     crud.update_user(db, email=user.email, user=db_user)
 
     # Create jwt
     token = jwt.encode(
         {"email": user.email, "exp": datetime.utcnow() + timedelta(hours=24)},
-        env("JWT_SECRET"),
-        env("JWT_ALGORITHM"),
+        JWT_SECRET,
+        JWT_ALGORITHM,
     )
 
     return {"result": True, "message": "Success Login", "token": token}

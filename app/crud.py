@@ -5,16 +5,11 @@ from sqlalchemy.orm import Session
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
-import environ
 import requests
 
 
 from . import models, schemas
-
-
-# env init
-env = environ.Env()
-env.read_env(env.str("ENV_PATH", ".env"))
+from .common.consts import NICE_URL, NICE_API_KEY
 
 
 # User
@@ -65,9 +60,11 @@ def update_user(db: Session, email: str, user: schemas.UserUpdate):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Token."
         )
-    db_school = get_school(db, code=user.school_id)
-    if not db_school:
-        create_school(db=db, code=user.school_id)
+
+    if user.school_id:
+        db_school = get_school(db, code=user.school_id)
+        if not db_school:
+            create_school(db=db, code=user.school_id)
 
     for field, value in user.model_dump().items():
         setattr(db_user, field, value)
@@ -75,10 +72,6 @@ def update_user(db: Session, email: str, user: schemas.UserUpdate):
     db.commit()
     db.refresh(db_user)
     return db_user
-
-
-# School
-NICE_URL = "https://open.neis.go.kr/hub"
 
 
 def api_search_schools(
@@ -89,7 +82,7 @@ def api_search_schools(
 ) -> schemas.SchoolLists:
     params = {
         "Type": "json",
-        "KEY": env("NICE_API_KEY"),
+        "KEY": NICE_API_KEY,
         "SD_SCHUL_CODE": code,
         "SCHUL_NM": name,
         "pindex": page_number,

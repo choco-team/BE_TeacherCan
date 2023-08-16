@@ -16,7 +16,8 @@ services:
       - .env
     volumes:
       - ./db.sqlite3:/app/db.sqlite3
-    command: uvicorn app.main:app --host 0.0.0.0
+      - ./app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --reload
     networks:
       - nginx-network
 
@@ -30,6 +31,8 @@ services:
       - .env
     volumes:
       - ./db.sqlite3:/app/db.sqlite3
+      - ./config:/app/config
+      - ./teachercan:/app/teachercan
     command: python manage.py runserver 0.0.0.0:8000
     networks:
       - nginx-network

@@ -3,8 +3,6 @@ from typing import Optional, ForwardRef
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
-User = ForwardRef("User")
-
 
 # User
 class Result(BaseModel):
@@ -106,4 +104,4 @@ class SchoolLunch(BaseModel):
     origins: list[Origin]
 
 
-User.update_forward_refs()
+User.model_rebuild()

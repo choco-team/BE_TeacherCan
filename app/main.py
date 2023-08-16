@@ -12,14 +12,11 @@ import jwt
 from . import models
 from .database import engine
 from .routers import auth, user, school
-
-# 환경변수 init
-env = environ.Env()
-env.read_env(env.str("ENV_PATH", ".env"))
+from .common.consts import DJANGO_SECRET_KEY, JWT_ALGORITHM, JWT_SECRET
 
 # django auth 사용을 위한 config
 settings.configure(
-    SECRET_KEY=env("DJANGO_SECRET_KEY"),
+    SECRET_KEY=DJANGO_SECRET_KEY,
     USE_I18N=False,
     AUTH_PASSWORD_VALIDATORS=[
         {
@@ -61,9 +58,7 @@ async def check_access(request: Request, call_next):
         ...
     elif key:
         key = key.replace("Bearer ", "")
-        request.state.email = jwt.decode(key, env("JWT_SECRET"), env("JWT_ALGORITHM"))[
-            "email"
-        ]
+        request.state.email = jwt.decode(key, JWT_SECRET, JWT_ALGORITHM)["email"]
     else:
         return JSONResponse(status_code=400, content={"message": "토큰 검증에 실패했습니다."})
     response = await call_next(request)

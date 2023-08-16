@@ -1,30 +1,16 @@
-from django.contrib.auth.hashers import (
-    make_password,
-    check_password,
-)
-
-from fastapi import Query, Depends, HTTPException, APIRouter
+from fastapi import Query, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from typing import Annotated
-from sqlalchemy.orm import Session
-
-from ..dependencies import get_db
-from .. import schemas, crud
-
-import environ
 import requests
+
+from .. import schemas, crud
+from ..common.consts import NICE_API_KEY, NICE_URL
 
 
 router = APIRouter(prefix="/school", tags=["school"])
 
-# 환경변수 init
-env = environ.Env()
-env.read_env(env.str("ENV_PATH", ".env"))
 
-# school
-niceKEY = env("NICE_API_KEY")
-niceURL = "https://open.neis.go.kr/hub"
-params = {"Type": "json", "KEY": niceKEY}
+base_params = {"Type": "json", "KEY": NICE_API_KEY}
 
 
 # 1. 학교정보 - 1. 학교 정보 검색
@@ -60,11 +46,13 @@ async def schoolLunch(
     schoolCode: int | None,
     date: Annotated[int | None, Query(ge=10000000, lt=100000000)],
 ):
-    nParams = params.copy()
-    nParams.update(
+    params = base_params.copy()
+    params.update(
         {"ATPT_OFCDC_SC_CODE": areaCode, "SD_SCHUL_CODE": schoolCode, "MLSV_YMD": date}
     )
-    response = requests.get(f"{niceURL}/mealServiceDietInfo", params=nParams).json()
+    response = requests.get(
+        f"{NICE_URL}/mealServiceDietInfo", base_params=params
+    ).json()
     try:
         response["mealServiceDietInfo"]
     except:
@@ -84,14 +72,3 @@ async def schoolLunch(
     return JSONResponse(
         status_code=200, content={"lunchMenu": lunchMenu, "origin": origin}
     )
-
-
-# school_code로 학교정보 가져오기? 아직 안쓰임. 미완성인듯?
-@router.get("/{school_code}", response_model=schemas.School)
-def read_school(school_code: str, db: Session = Depends(get_db)):
-    db_school = crud.get_school(db, school_code=school_code)
-    password = "1234"
-    hashed_password = make_password(password)
-    print(check_password(password, hashed_password))
-    print(db_school.users)
-    return db_school
