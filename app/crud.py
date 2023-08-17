@@ -13,7 +13,7 @@ from .common.consts import NICE_URL, NICE_API_KEY
 
 
 # User
-def get_user(db: Session, email: str = None):
+def get_user(db: Session, email: str = None) -> models.User | None:
     user = db.query(models.User).filter(models.User.email == email).first()
     return user
 
