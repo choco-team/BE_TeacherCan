@@ -4,9 +4,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-
-import environ
-
 import jwt
 
 from . import models
@@ -35,7 +32,7 @@ settings.configure(
 )
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 
 # middleware
@@ -44,16 +41,17 @@ app = FastAPI()
 async def check_access(request: Request, call_next):
     path = request.url.path
     except_path_list = [
-        "/",
-        "/docs",
-        "/redoc",
-        "/openapi.json",
-        "/auth/signup/validation",
-        "/auth/signup",
-        "/auth/signin",
-        "/school/list",
+        "/api/",
+        "/api/docs",
+        "/api/redoc",
+        "/api/openapi.json",
+        "/api/auth/signup/validation",
+        "/api/auth/signup",
+        "/api/auth/signin",
+        "/api/school/list",
     ]
     key = request.headers.get("Authorization")
+    print(path)
     if path in except_path_list:
         ...
     elif key:
@@ -84,3 +82,8 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(school.router)
+
+
+@app.get("/")
+def read_main(request: Request):
+    return {"message": "Hello World", "root_path": request.scope.get("root_path")}
