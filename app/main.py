@@ -58,7 +58,11 @@ async def check_access(request: Request, call_next):
         ...
     elif key:
         key = key.replace("Bearer ", "")
-        request.state.email = jwt.decode(key, JWT_SECRET, JWT_ALGORITHM)["email"]
+        try:
+            request.state.email = jwt.decode(key, JWT_SECRET, JWT_ALGORITHM)["email"]
+        except:
+            return JSONResponse(status_code=400, content={"message": "토큰 검증에 실패했습니다."})
+
     else:
         return JSONResponse(status_code=400, content={"message": "토큰 검증에 실패했습니다."})
     response = await call_next(request)

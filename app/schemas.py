@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional, ForwardRef
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
@@ -27,14 +27,14 @@ class UserCreate(UserSignin):
 
 
 class User(UserBase):
-    social_id: str | None = None
-    nickname: str | None = None
-    is_male: bool | None = None
-    birthday: date | None = None
-    last_login: datetime | None = None
-    joined_at: datetime
-    avatar_sgv: str | None = None
-    school: Optional["School"] = None
+    social_id: str | None = Field(None, serialization_alias="socialId")
+    nickname: str | None = Field(None)
+    is_male: bool | None = Field(None, serialization_alias="isMale")
+    birthday: date | None = Field(None)
+    last_login: datetime | None = Field(None, serialization_alias="lastLogin")
+    joined_at: datetime = Field(serialization_alias="joinedAt")
+    avatar_sgv: str | None = Field(None, serialization_alias="avatarSgv")
+    school: Optional["School"] = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -60,7 +60,7 @@ class SchoolBase(BaseModel):
 
 
 class School(SchoolBase):
-    area_code: str
+    area_code: str | None = Field(None, serialization_alias="areaCode")
     name: str
     # users: list[User] = []
 
