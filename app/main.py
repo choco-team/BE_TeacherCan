@@ -12,7 +12,7 @@ import jwt
 from . import models
 from .database import engine
 from .routers import auth, user, school
-from .common.consts import DJANGO_SECRET_KEY, JWT_ALGORITHM, JWT_SECRET
+from .common.consts import DJANGO_SECRET_KEY, JWT_ALGORITHM, JWT_SECRET, ALLOWED_HOSTS
 
 # django auth 사용을 위한 config
 settings.configure(
@@ -78,7 +78,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 # TrustedHost 미들웨어
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
 # router
 app.include_router(auth.router)

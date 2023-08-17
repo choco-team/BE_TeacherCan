@@ -5,6 +5,8 @@ import environ
 env = environ.Env()
 env.read_env(env.str("ENV_PATH", ".env"))
 
+ALLOWED_HOSTS: list = env("ALLOWED_HOSTS").split(" ")
+
 # database
 DB_URL = "sqlite:///./db.sqlite3"
 
