@@ -1,12 +1,15 @@
+from typing import Annotated
 from enum import Enum
 from datetime import date, timedelta, datetime
 
-from fastapi import Query, HTTPException, APIRouter
-from typing import Annotated
+from fastapi import Depends, Query, HTTPException, APIRouter, Request, status
+from sqlalchemy.orm import Session
 import requests
 
-from .. import schemas, crud
+from .. import crud, schemas
 from ..common.consts import NICE_API_KEY, NICE_URL
+from ..dependencies import get_db
+from .auth import auth_scheme
 
 
 router = APIRouter(prefix="/school", tags=["school"])
@@ -34,15 +37,30 @@ class MenuType(Enum):
 
 @router.get("/lunch-menu", status_code=200, response_model=list[schemas.SchoolMeal])
 async def get_menu(
-    areaCode: str | None,
-    schoolCode: int | None,
     date: Annotated[date | None, Query()],
     type: MenuType,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: str = Depends(auth_scheme),
 ):
+    # 유저 정보 불러오기 from token
+    db_user = crud.get_user(db, email=request.state.email)
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Token"
+        )
+    if not db_user.school:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No registered school information",
+        )
+
     # 파라미터 생성
     params = base_params.copy()
-    start_date = date if type == "day" else date - timedelta(date.weekday())
-    end_date = date if type == "day" else start_date + timedelta(4)
+    start_date = date if type == MenuType.day else date - timedelta(date.weekday())
+    end_date = date if type == MenuType.day else start_date + timedelta(4)
+    areaCode = db_user.school.area_code
+    schoolCode = db_user.school.code
     params.update(
         {
             "ATPT_OFCDC_SC_CODE": areaCode,

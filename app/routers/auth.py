@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.hashers import check_password
 
 from fastapi import Depends, HTTPException, APIRouter, status
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 import jwt
@@ -13,6 +14,9 @@ from ..dependencies import get_db
 from ..common.consts import JWT_ALGORITHM, JWT_SECRET
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+# swagger ui 헤더에 jwt 추가를 위한 스키마
+auth_scheme = HTTPBearer()
 
 
 # Auth

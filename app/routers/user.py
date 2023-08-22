@@ -1,16 +1,11 @@
 from fastapi import Depends, HTTPException, APIRouter, Request, status
-from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 from .. import crud, schemas
 from ..dependencies import get_db
-
+from .auth import auth_scheme
 
 router = APIRouter(prefix="/user", tags=["User"])
-
-
-# swagger ui 헤더에 jwt 추가를 위한 스키마
-auth_scheme = HTTPBearer()
 
 
 # 1.개인 정보 조회
