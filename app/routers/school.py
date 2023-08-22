@@ -20,12 +20,13 @@ base_params = {"Type": "json", "KEY": NICE_API_KEY}
 
 # 1. 학교정보 - 1. 학교 정보 검색
 @router.get("/list", status_code=200, response_model=schemas.SchoolLists)
-# schoolName = None : 모든 학교를 ㄱㄴㄷ 순으로 응답
-async def schoolList(
-    schoolName: str | None = None, pageNumber: int | None = 1, dataSize: int | None = 10
+async def school_list(
+    school_name: str | None = Query(None, alias="schoolName"),
+    page_number: int | None = Query(1, alias="pageNumber"),
+    data_size: int | None = Query(10, alias="dataSize"),
 ):
     return crud.api_search_schools(
-        name=schoolName, page_number=pageNumber, data_size=dataSize
+        name=school_name, page_number=page_number, data_size=data_size
     )
 
 

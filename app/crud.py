@@ -99,11 +99,11 @@ def api_search_schools(
         schools = [schemas.SchoolList(**school) for school in school_info[1]["row"]]
         return schemas.SchoolLists(
             **{
-                "schoollist": schools,
+                "school_list": schools,
                 "pagination": {
-                    "pageNumber": page_number,
-                    "dataSize": data_size,
-                    "totalPageNumber": -(-total // data_size),
+                    "page_number": page_number,
+                    "data_size": data_size,
+                    "total_page_number": -(-total // data_size),
                 },
             }
         )
