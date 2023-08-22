@@ -40,13 +40,13 @@ class User(UserBase):
 
 
 class UserUpdate(BaseModel):
-    social_id: str | None = ...
-    nickname: str | None = ...
-    is_male: bool | None = ...
-    birthday: date | None = ...
-    last_login: datetime | None = ...
-    avatar_sgv: str | None = ...
-    school_id: str | None = ...
+    nickname: str = Field(..., alias="nickname")
+    social_id: str | None = Field(..., alias="socialId")
+    is_male: bool | None = Field(..., alias="isMale")
+    birthday: date | None = Field(..., alias="birthday")
+    last_login: datetime | None = Field(..., alias="lastLogin")
+    avatar_sgv: str | None = Field(..., alias="avatarSgv")
+    school_id: str | None = Field(..., alias="schoolCode")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -72,20 +72,20 @@ class UserSchool(User):
 
 
 class SchoolList(BaseModel):
-    schoolName: str = Field(alias="SCHUL_NM")
-    schoolAddress: str = Field(alias="ORG_RDNMA")
-    schoolCode: str = Field(alias="SD_SCHUL_CODE")
-    areaCode: str = Field(alias="ATPT_OFCDC_SC_CODE")
+    school_name: str = Field(alias="SCHUL_NM", serialization_alias="schoolName")
+    school_address: str = Field(alias="ORG_RDNMA", serialization_alias="schoolAddress")
+    school_code: str = Field(alias="SD_SCHUL_CODE", serialization_alias="schoolCode")
+    area_code: str = Field(alias="ATPT_OFCDC_SC_CODE", serialization_alias="areaCode")
 
 
 class Pagination(BaseModel):
-    pageNumber: int
-    dataSize: int
-    totalPageNumber: int | None
+    page_number: int = Field(serialization_alias="pageNumber")
+    data_size: int = Field(serialization_alias="dateSize")
+    total_page_number: int = Field(serialization_alias="totalPageNumber")
 
 
 class SchoolLists(BaseModel):
-    schoollist: list[SchoolList] | None
+    school_list: list[SchoolList] = Field(serialization_alias="schoolList")
     pagination: Pagination
 
 
@@ -103,7 +103,7 @@ class Origin(BaseModel):
 
 
 class SchoolMeal(BaseModel):
-    meal_type: str
+    meal_type: str = Field(..., serialization_alias="mealType")
     date: date
     menu: list[Menu]
     origin: list[Origin]
