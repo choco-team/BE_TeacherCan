@@ -1,10 +1,15 @@
-from fastapi import Query, HTTPException, APIRouter
-from fastapi.responses import JSONResponse
 from typing import Annotated
+from enum import Enum
+from datetime import date, timedelta, datetime
+
+from fastapi import Depends, Query, HTTPException, APIRouter, Request, status
+from sqlalchemy.orm import Session
 import requests
 
-from .. import schemas, crud
+from .. import crud, schemas
 from ..common.consts import NICE_API_KEY, NICE_URL
+from ..dependencies import get_db
+from .auth import auth_scheme
 
 
 router = APIRouter(prefix="/school", tags=["school"])
@@ -25,36 +30,51 @@ async def schoolList(
 
 
 # 2. 급식정보 - 1. 급식 정보 조회
-def lunchMenuToDict(str):
-    splited = str.split(" ")
-    return {
-        "menu": splited[0],
-        "allergy": []
-        if not splited[1]
-        else list(map(int, splited[1].strip("(" ")").split("."))),
-    }
+class MenuType(Enum):
+    weekend = "weekend"
+    day = "day"
 
 
-def originToDict(str):
-    splited = str.split(" : ")
-    return {"ingredient": splited[0], "origin": splited[1]}
-
-
-@router.get("/lunch-menu", status_code=200, response_model=schemas.SchoolLunch)
-async def schoolLunch(
-    areaCode: str | None,
-    schoolCode: int | None,
-    date: Annotated[int | None, Query(ge=10000000, lt=100000000)],
+@router.get("/lunch-menu", status_code=200, response_model=list[schemas.SchoolMeal])
+async def get_menu(
+    date: Annotated[date | None, Query()],
+    type: MenuType,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: str = Depends(auth_scheme),
 ):
+    # 유저 정보 불러오기 from token
+    db_user = crud.get_user(db, email=request.state.email)
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Token"
+        )
+    if not db_user.school:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No registered school information",
+        )
+
+    # 파라미터 생성
     params = base_params.copy()
+    start_date = date if type == MenuType.day else date - timedelta(date.weekday())
+    end_date = date if type == MenuType.day else start_date + timedelta(4)
+    areaCode = db_user.school.area_code
+    schoolCode = db_user.school.code
     params.update(
-        {"ATPT_OFCDC_SC_CODE": areaCode, "SD_SCHUL_CODE": schoolCode, "MLSV_YMD": date}
+        {
+            "ATPT_OFCDC_SC_CODE": areaCode,
+            "SD_SCHUL_CODE": schoolCode,
+            "MLSV_FROM_YMD": start_date.strftime("%Y%m%d"),
+            "MLSV_TO_YMD": end_date.strftime("%Y%m%d"),
+        }
     )
-    response = requests.get(
-        f"{NICE_URL}/mealServiceDietInfo", base_params=params
-    ).json()
+
+    # 외부 api 호출
+    response = requests.get(f"{NICE_URL}/mealServiceDietInfo", params=params).json()
     try:
         response["mealServiceDietInfo"]
+
     except:
         code = int(response["RESULT"]["CODE"].split("-")[1])
         if code == 200:  # 200: 해당하는 데이터가 없습니다.
@@ -66,9 +86,29 @@ async def schoolLunch(
             raise HTTPException(
                 status_code=500, detail={"code": 500, "message": "내부 API호출 실패"}
             )
-    row = response["mealServiceDietInfo"][1]["row"][0]
-    lunchMenu = list(map(lunchMenuToDict, row["DDISH_NM"].split("<br/>")))
-    origin = list(map(originToDict, row["ORPLC_INFO"].split("<br/>")))
-    return JSONResponse(
-        status_code=200, content={"lunchMenu": lunchMenu, "origin": origin}
-    )
+
+    # 스키마에 맞게 데이터 수정
+    res_menu: list[str] = response["mealServiceDietInfo"][1]["row"]
+    for menu in res_menu:
+        menu["meal_type"] = menu["MMEAL_SC_NM"]
+        menu["date"] = datetime.strptime(menu["MLSV_YMD"], "%Y%m%d").date()
+        menu["menu"] = [
+            {
+                "dish": dish,
+                "allergy": [
+                    int(allergy)
+                    for allergy in allergies.strip("()").split(".")
+                    if allergy
+                ],
+            }
+            for dish, *_, allergies in [
+                dish_info.split(" ") for dish_info in menu["DDISH_NM"].split("<br/>")
+            ]
+        ]
+        menu["origin"] = [
+            {"ingredient": ingredient, "place": place}
+            for ingredient, *_, place in [
+                origin.split(" : ") for origin in menu["ORPLC_INFO"].split("<br/>")
+            ]
+        ]
+    return res_menu

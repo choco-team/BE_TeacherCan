@@ -89,19 +89,24 @@ class SchoolLists(BaseModel):
     pagination: Pagination
 
 
-class LunchMenu(BaseModel):
-    menu: str
+# Lunch Menu
+
+
+class Menu(BaseModel):
+    dish: str
     allergy: list[int]
 
 
 class Origin(BaseModel):
     ingredient: str
-    origin: str
+    place: str
 
 
-class SchoolLunch(BaseModel):
-    lunchMenu: list[LunchMenu]
-    origins: list[Origin]
+class SchoolMeal(BaseModel):
+    meal_type: str
+    date: date
+    menu: list[Menu]
+    origin: list[Origin]
 
 
 User.model_rebuild()
