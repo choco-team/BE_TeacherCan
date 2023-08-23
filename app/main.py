@@ -68,13 +68,13 @@ async def check_access(request: Request, call_next):
 
 
 # CORS 미들웨어
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["localhost"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    # allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # TrustedHost 미들웨어
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
