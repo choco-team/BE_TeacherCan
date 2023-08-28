@@ -92,9 +92,14 @@ class SchoolLists(BaseModel):
 # Lunch Menu
 
 
+class Allergy(BaseModel):
+    code: int
+    name: str
+
+
 class Menu(BaseModel):
     dish: str
-    allergy: list[int]
+    allergy: list[Allergy] = Field([])
 
 
 class Origin(BaseModel):
