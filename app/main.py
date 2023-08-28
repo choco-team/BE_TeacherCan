@@ -60,10 +60,10 @@ async def check_access(request: Request, call_next):
         try:
             request.state.email = jwt.decode(key, JWT_SECRET, JWT_ALGORITHM)["email"]
         except:
-            return JSONResponse(status_code=400, content={"message": "토큰 검증에 실패했습니다."})
+            return JSONResponse(status_code=401, content={"message": "토큰 검증에 실패했습니다."})
 
     else:
-        return JSONResponse(status_code=400, content={"message": "토큰 검증에 실패했습니다."})
+        return JSONResponse(status_code=401, content={"message": "토큰 검증에 실패했습니다."})
     response = await call_next(request)
     return response
 
