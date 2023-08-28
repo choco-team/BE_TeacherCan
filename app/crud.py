@@ -125,14 +125,13 @@ def api_search_schools(
 
 def get_school(db: Session, code: str | None = None):
     result = db.query(models.School).filter(models.School.code == code).first()
-    print(result)
     return result
 
 
 def create_school(db: Session, code: str):
-    school = api_search_schools(code=code).schoollist[0]
+    school = api_search_schools(code=code).school_list[0]
     db_school = models.School(
-        code=code, name=school.schoolName, area_code=school.areaCode
+        code=code, name=school.school_name, area_code=school.area_code
     )
     db.add(db_school)
     db.commit()
