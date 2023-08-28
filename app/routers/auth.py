@@ -54,9 +54,9 @@ def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
         )
 
     # Edit last_login
-    db_user = schemas.UserUpdate.model_validate(db_user)
-    db_user.last_login = datetime.utcnow()
-    crud.update_user(db, email=user.email, user=db_user)
+    setattr(db_user, "last_login", datetime.utcnow())
+    db.commit()
+    db.refresh(db_user)
 
     # Create jwt
     token = jwt.encode(
