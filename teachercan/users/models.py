@@ -88,6 +88,31 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.is_superuser
 
 
+class StudentList(models.Model):
+    name = models.CharField(max_length=15)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_main = models.BooleanField(default=False)
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class Allergy(models.Model):
+    code = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=20)
+
+
+class Student(models.Model):
+    name = models.CharField(max_length=10)
+    number = models.IntegerField(unique=True)
+    is_male = models.BooleanField()
+    description = models.TextField(null=True, blank=True)
+
+    student_list = models.ForeignKey(
+        StudentList, on_delete=models.CASCADE, db_column="list_id"
+    )
+    allergy = models.ManyToManyField(Allergy, db_column="allergy_code")
+
+
 # class User(AbstractBaseUser, PermissionsMixin):
 #     email_validator = EmailValidator()
 #     nickname_validator = UnicodeUsernameValidator()

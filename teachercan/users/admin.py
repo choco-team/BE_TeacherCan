@@ -1,15 +1,17 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, School
+from .models import User, School, StudentList, Student, Allergy
 
 
 class SchoolInline(admin.TabularInline):
     model = School
 
+
 class UserInline(admin.TabularInline):
     model = User
     extra = 1
+
 
 class SchoolAdmin(admin.ModelAdmin):
     fieldsets = [
@@ -28,7 +30,7 @@ class BaseUserAdmin(UserAdmin):
         "is_superuser",
         "joined_at",
         "last_login",
-        "school"
+        "school",
     )
     list_filter = ("is_superuser",)
     fieldsets = (
@@ -90,7 +92,7 @@ class BaseUserAdmin(UserAdmin):
                     "is_superuser",
                     "groups",
                     "user_permissions",
-                    "school"
+                    "school",
                 ),
             },
         ),
@@ -102,3 +104,6 @@ class BaseUserAdmin(UserAdmin):
 
 admin.site.register(User, BaseUserAdmin)
 admin.site.register(School, SchoolAdmin)
+admin.site.register(StudentList)
+admin.site.register(Student)
+admin.site.register(Allergy)

@@ -49,6 +49,7 @@ async def check_access(request: Request, call_next):
         "/api/auth/signup",
         "/api/auth/signin",
         "/api/school/list",
+        "/api/user/student",
     ]
     key = request.headers.get("Authorization")
     print(path)

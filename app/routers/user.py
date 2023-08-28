@@ -31,3 +31,9 @@ async def my_info(
 ):
     db_user = crud.update_user(db, email=request.state.email, user=user)
     return db_user
+
+
+# TODO 명렬표
+@router.get("/student")
+async def test(db: Session = Depends(get_db)):
+    return {"test": "test_result"}
