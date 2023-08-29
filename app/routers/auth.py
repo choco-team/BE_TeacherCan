@@ -3,10 +3,10 @@ from datetime import datetime, timedelta
 from django.contrib.auth.hashers import check_password
 
 from fastapi import Depends, HTTPException, APIRouter, status
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-import jwt
+from jwt import encode, decode
 
 from .. import crud, schemas
 from ..dependencies import get_db
@@ -16,7 +16,21 @@ from ..common.consts import JWT_ALGORITHM, JWT_SECRET
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 # swagger ui 헤더에 jwt 추가를 위한 스키마
-auth_scheme = HTTPBearer()
+auth_scheme = HTTPBearer(scheme_name="token")
+
+
+# 토큰 확인 함수
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+    if credentials.scheme != "Bearer":
+        raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+    if not credentials.credentials:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    token = credentials.credentials
+    try:
+        user_email = decode(token, JWT_SECRET, JWT_ALGORITHM)["email"]
+    except:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user_email
 
 
 # Auth
@@ -26,7 +40,7 @@ def is_email_usable(user: schemas.UserBase, db: Session = Depends(get_db)):
     """
     `이메일 중복검사`
     """
-    db_user = crud.get_user(db, email=user.email)
+    db_user = crud.get_user(db, email=user.email, not_found_error=False)
     if db_user:
         raise HTTPException(status_code=400, detail="The email is already in use.")
     return {"result": True, "message": "The email is available."}
@@ -47,10 +61,10 @@ def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
     """
     `로그인`
     """
-    db_user = crud.get_user(db, email=user.email)
-    if db_user is None or not check_password(user.password, db_user.password):
+    db_user = crud.get_user(db, email=user.email, not_found_error=False)
+    if not db_user or not check_password(user.password, db_user.password):
         raise HTTPException(
-            status_code=400, detail={"result": False, "message": "Failed Login"}
+            status_code=401, detail={"result": False, "message": "Failed Login"}
         )
 
     # Edit last_login
@@ -59,7 +73,7 @@ def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
     db.refresh(db_user)
 
     # Create jwt
-    token = jwt.encode(
+    token = encode(
         {"email": user.email, "exp": datetime.utcnow() + timedelta(hours=24)},
         JWT_SECRET,
         JWT_ALGORITHM,

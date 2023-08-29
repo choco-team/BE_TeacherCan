@@ -1,7 +1,7 @@
-from datetime import datetime
-
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import NoResultFound
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
@@ -13,13 +13,19 @@ from .common.consts import NICE_URL, NICE_API_KEY
 
 
 # User
-def get_user(db: Session, email: str = None) -> models.User | None:
+def get_user(
+    db: Session, email: str = None, not_found_error: bool = True
+) -> models.User | None:
     user = db.query(models.User).filter(models.User.email == email).first()
+    if not_found_error and not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Not Found User."
+        )
     return user
 
 
 def create_user(db: Session, user: schemas.UserCreate):
-    if get_user(db, email=user.email):
+    if get_user(db, email=user.email, not_found_error=False):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="User Already Exists."
         )
@@ -47,7 +53,6 @@ def create_user(db: Session, user: schemas.UserCreate):
         email=user.email,
         password=hashed_password,
         nickname=user.nickname,
-        joined_at=datetime.utcnow(),
     )
     db.add(db_user)
     db.commit()
@@ -56,10 +61,6 @@ def create_user(db: Session, user: schemas.UserCreate):
 
 def update_user(db: Session, email: str, user: schemas.UserUpdate):
     db_user = get_user(db, email=email)
-    if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Token."
-        )
 
     if user.school_id:
         db_school = get_school(db, code=user.school_id)
@@ -136,3 +137,134 @@ def create_school(db: Session, code: str):
     db.add(db_school)
     db.commit()
     db.refresh(db_school)
+
+
+def allergies(db: Session, codes: list[int]):
+    stmt = select(models.Allergy).where(models.Allergy.code.in_(codes))
+    db_allergy = db.scalars(stmt).all()
+    return db_allergy
+
+
+def create_student_list(
+    db: Session, email: str, student_list: schemas.StudentListCreate
+):
+    db_user = get_user(db, email)
+    db_students = []
+    for student in student_list.students:
+        db_student = models.Student(
+            name=student.name,
+            number=student.number,
+            is_male=student.is_male,
+            description=student.description,
+            allergies=allergies(db, student.allergies),
+        )
+        db_students.append(db_student)
+    db_student_list = models.StudentList(
+        name=student_list.name,
+        user_id=db_user.id,
+        is_main=student_list.is_main,
+        students=db_students,
+    )
+    db.add(db_student_list)
+    db.commit()
+    db.refresh(db_student_list)
+    return db_student_list
+
+
+def get_student_list(db: Session, email: str, list_id: int):
+    stmt = (
+        select(models.StudentList)
+        .join(models.User.student_list)
+        .where(models.User.email == email)
+        .where(models.StudentList.id == list_id)
+    )
+    try:
+        return db.scalars(stmt).one()
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail="해당하는 명렬표가 없습니다.")
+
+
+def get_student_lists(db: Session, email: str):
+    stmt = (
+        select(models.StudentList)
+        .join(models.User.student_list)
+        .where(models.User.email == email)
+    )
+    db_student_lists = db.scalars(stmt).all()
+    if db_student_lists:
+        return db_student_lists
+    raise HTTPException(status_code=404, detail="명렬표가 없습니다.")
+
+
+def delete_student_list(db: Session, email: str, list_id: int):
+    db_student_list = get_student_list(db, email, list_id)
+    db.delete(db_student_list)
+    db.commit()
+
+
+def update_student_list(
+    db: Session, email: str, list_id: int, student_list: schemas.StudentListUpdate
+):
+    db_student_list = get_student_list(db, email, list_id)
+    db_student_list.name = student_list.name
+    db_student_list.is_main = student_list.is_main
+    db.flush()
+    db.commit()
+    db.refresh(db_student_list)
+    return db_student_list
+
+
+def get_student(db: Session, email: str, student_id: int):
+    stmt = (
+        select(models.Student)
+        .join(models.StudentList)
+        .join(models.User)
+        .where(models.User.email == email)
+        .where(models.Student.id == student_id)
+    )
+    try:
+        return db.scalars(stmt).one()
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail="해당하는 학생이 없습니다.")
+
+
+def create_student(
+    db: Session, email: str, list_id: int, student: schemas.StudentCreate
+):
+    db_student_list = get_student_list(db, email, list_id)
+
+    db_student = models.Student(
+        list_id=list_id,
+        name=student.name,
+        number=student.number,
+        is_male=student.is_male,
+        description=student.description,
+        allergies=allergies(db, student.allergies),
+    )
+
+    db_student_list.students.append(db_student)
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+
+def update_student(
+    db: Session, email: str, student_id: int, student: schemas.StudentUpdate
+):
+    db_student = get_student(db, email, student_id)
+    db_student.name = student.name
+    db_student.number = student.number
+    db_student.is_male = student.is_male
+    db_student.description = student.description
+    db_student.allergies = allergies(db, student.allergies)
+
+    db.flush()
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+
+def delete_student(db: Session, email: str, student_id: int):
+    db_student = get_student(db, email, student_id)
+    db.delete(db_student)
+    db.commit()

@@ -2,14 +2,14 @@ from typing import Annotated
 from enum import Enum
 from datetime import date, timedelta, datetime
 
-from fastapi import Depends, Query, HTTPException, APIRouter, Request, status
+from fastapi import Depends, Query, HTTPException, APIRouter, status
 from sqlalchemy.orm import Session
 import requests
 
 from .. import crud, schemas
 from ..common.consts import NICE_API_KEY, NICE_URL
 from ..dependencies import get_db
-from .auth import auth_scheme
+from .auth import verify_token
 
 
 router = APIRouter(prefix="/school", tags=["school"])
@@ -40,20 +40,15 @@ class MenuType(Enum):
 async def get_menu(
     date: Annotated[date | None, Query()],
     type: MenuType,
-    request: Request,
     db: Session = Depends(get_db),
-    _: str = Depends(auth_scheme),
+    token_email: str = Depends(verify_token),
 ):
     # 유저 정보 불러오기 from token
-    db_user = crud.get_user(db, email=request.state.email)
-    if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Token"
-        )
+    db_user = crud.get_user(db, email=token_email)
     if not db_user.school:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No registered school information",
+            detail="No registered school information.",
         )
 
     # 파라미터 생성
@@ -96,11 +91,14 @@ async def get_menu(
         menu["menu"] = [
             {
                 "dish": dish,
-                "allergy": [
-                    int(allergy)
-                    for allergy in allergies.strip("()").split(".")
-                    if allergy
-                ],
+                "allergy": crud.allergy(
+                    db,
+                    [
+                        int(allergy)
+                        for allergy in allergies.strip("()").split(".")
+                        if allergy
+                    ],
+                ),
             }
             for dish, *_, allergies in [
                 dish_info.split(" ") for dish_info in menu["DDISH_NM"].split("<br/>")
