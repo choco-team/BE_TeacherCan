@@ -115,3 +115,51 @@ class SchoolMeal(BaseModel):
 
 
 User.model_rebuild()
+
+
+# Student List
+
+
+class StudentDelete(BaseModel):
+    id: int = Field(...)
+
+
+class StudentCreate(BaseModel):
+    number: int = Field(...)
+    name: str = Field(...)
+    is_male: bool = Field(..., alias="isMale")
+    description: str | None = Field(None)
+    allergies: list[int] | None
+
+
+class StudentUpdate(StudentCreate):
+    ...
+
+
+class Student(StudentDelete, StudentUpdate):
+    is_male: bool = Field(serialization_alias="isMale")
+    allergies: list[Allergy] = Field([])
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudentListDelete(BaseModel):
+    id: int = Field(...)
+
+
+class StudentListUpdate(BaseModel):
+    name: str = Field(...)
+    is_main: bool | None = Field(False, alias="isMain")
+
+
+class StudentListCreate(StudentListUpdate):
+    students: list[StudentCreate]
+
+
+class StudentList(StudentDelete, StudentListUpdate):
+    is_main: bool = Field(..., serialization_alias="isMain")
+    created_at: datetime = Field(..., serialization_alias="createdAt")
+    updated_at: datetime = Field(..., serialization_alias="updatedAt")
+    students: list[Student]
+
+    model_config = ConfigDict(from_attributes=True)

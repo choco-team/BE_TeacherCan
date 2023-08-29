@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
 from .database import engine
-from .routers import auth, user, school
+from .routers import auth, user, school, student_list
 from .common.consts import DJANGO_SECRET_KEY, ALLOWED_HOSTS
 
 # django auth 사용을 위한 config
@@ -49,6 +49,7 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(school.router)
+app.include_router(student_list.router)
 
 
 @app.get("/")
