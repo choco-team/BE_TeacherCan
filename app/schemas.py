@@ -40,11 +40,10 @@ class User(UserBase):
 
 
 class UserUpdate(BaseModel):
-    nickname: str = Field(..., alias="nickname")
+    nickname: str = Field(...)
     social_id: str | None = Field(..., alias="socialId")
     is_male: bool | None = Field(..., alias="isMale")
-    birthday: date | None = Field(..., alias="birthday")
-    last_login: datetime | None = Field(..., alias="lastLogin")
+    birthday: date | None = Field(...)
     avatar_sgv: str | None = Field(..., alias="avatarSgv")
     school_id: str | None = Field(..., alias="schoolCode")
 
@@ -52,7 +51,7 @@ class UserUpdate(BaseModel):
 
 
 class UserDelete(UserBase):
-    pass
+    ...
 
 
 class SchoolBase(BaseModel):
@@ -62,7 +61,6 @@ class SchoolBase(BaseModel):
 class School(SchoolBase):
     area_code: str | None = Field(None, serialization_alias="areaCode")
     name: str
-    # users: list[User] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -90,8 +88,6 @@ class SchoolLists(BaseModel):
 
 
 # Lunch Menu
-
-
 class Allergy(BaseModel):
     code: int
     name: str
@@ -118,8 +114,6 @@ User.model_rebuild()
 
 
 # Student List
-
-
 class StudentDelete(BaseModel):
     id: int = Field(...)
 
