@@ -74,10 +74,7 @@ async def get_menu(
     except:
         code = int(response["RESULT"]["CODE"].split("-")[1])
         if code == 200:  # 200: 해당하는 데이터가 없습니다.
-            raise HTTPException(
-                status_code=400,
-                detail={"code": 400, "message": response["RESULT"]["MESSAGE"]},
-            )
+            return []
         else:
             raise HTTPException(
                 status_code=500, detail={"code": 500, "message": "내부 API호출 실패"}
