@@ -82,26 +82,32 @@ async def get_menu(
 
     # 스키마에 맞게 데이터 수정
     res_menu: list[str] = response["mealServiceDietInfo"][1]["row"]
+
     for menu in res_menu:
-        menu["meal_type"] = menu["MMEAL_SC_NM"]
-        menu["date"] = datetime.strptime(menu["MLSV_YMD"], "%Y%m%d").date()
-        menu["menu"] = [
-            {
-                "dish": dish,
-                "allergy": [
-                    int(allergy)
-                    for allergy in allergies.strip("()").split(".")
-                    if allergy
-                ],
-            }
-            for dish, *_, allergies in [
-                dish_info.split(" ") for dish_info in menu["DDISH_NM"].split("<br/>")
+        try:
+            menu["meal_type"] = menu["MMEAL_SC_NM"]
+            menu["date"] = datetime.strptime(menu["MLSV_YMD"], "%Y%m%d").date()
+            menu["menu"] = [
+                {
+                    "dish": dish,
+                    "allergy": [
+                        int(allergy)
+                        for allergy in allergies.strip("()").split(".")
+                        if allergy
+                    ],
+                }
+                for dish, *_, allergies in [
+                    dish_info.split(" ")
+                    for dish_info in menu["DDISH_NM"].split("<br/>")
+                ]
             ]
-        ]
-        menu["origin"] = [
-            {"ingredient": ingredient, "place": place}
-            for ingredient, *_, place in [
-                origin.split(" : ") for origin in menu["ORPLC_INFO"].split("<br/>")
+            menu["origin"] = [
+                {"ingredient": ingredient, "place": place}
+                for ingredient, *_, place in [
+                    origin.split(" : ") for origin in menu["ORPLC_INFO"].split("<br/>")
+                ]
             ]
-        ]
+        except:
+            print(f"급식 데이터 파싱 실패, {res_menu}")
+            return []
     return res_menu
