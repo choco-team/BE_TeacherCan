@@ -95,7 +95,7 @@ class Allergy(BaseModel):
 
 class Menu(BaseModel):
     dish: str
-    allergy: list[Allergy] = Field([])
+    allergy: list[int] = Field([])
 
 
 class Origin(BaseModel):
@@ -123,7 +123,7 @@ class StudentCreate(BaseModel):
     name: str = Field(...)
     is_male: bool = Field(..., alias="isMale")
     description: str | None = Field(None)
-    allergies: list[int] | None
+    allergy: list[int] | None
 
 
 class StudentUpdate(StudentCreate):
@@ -132,7 +132,8 @@ class StudentUpdate(StudentCreate):
 
 class Student(StudentDelete, StudentUpdate):
     is_male: bool = Field(serialization_alias="isMale")
-    allergies: list[Allergy] = Field([])
+    allergy: list[Allergy] = Field([])
+    allergies: list[int] = Field([], serialization_alias="allergy")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -150,7 +151,7 @@ class StudentListCreate(StudentListUpdate):
     students: list[StudentCreate]
 
 
-class StudentList(StudentDelete, StudentListUpdate):
+class StudentList(StudentListDelete, StudentListUpdate):
     is_main: bool = Field(..., serialization_alias="isMain")
     created_at: datetime = Field(..., serialization_alias="createdAt")
     updated_at: datetime = Field(..., serialization_alias="updatedAt")

@@ -86,7 +86,7 @@ class Allergy(Base):
     name = Column(String(20))
 
     students = relationship(
-        "Student", secondary=student_allergy_table, back_populates="allergies"
+        "Student", secondary=student_allergy_table, back_populates="allergy"
     )
 
     def __repr__(self):
@@ -104,9 +104,9 @@ class Student(Base):
     list_id = Column(Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE"))
 
     student_list = relationship("StudentList", back_populates="students")
-    allergies = relationship(
+    allergy = relationship(
         "Allergy", secondary=student_allergy_table, back_populates="students"
     )
 
     def __repr__(self):
-        return f"Student(id={self.id}, name={self.name}, number={self.number}, is_male={self.is_male}, allergies={[allergy.code for allergy in self.allergies]}"
+        return f"Student(id={self.id}, name={self.name}, number={self.number}, is_male={self.is_male}, allergy={[allergy.code for allergy in self.allergy]}"

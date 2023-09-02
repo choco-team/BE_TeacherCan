@@ -139,10 +139,21 @@ def create_school(db: Session, code: str):
     db.refresh(db_school)
 
 
-def allergies(db: Session, codes: list[int]):
+def allergy(db: Session, codes: list[int]):
     stmt = select(models.Allergy).where(models.Allergy.code.in_(codes))
     db_allergy = db.scalars(stmt).all()
     return db_allergy
+
+
+def convert_student_allergy(student: schemas.Student):
+    student.allergies = [allergy.code for allergy in student.allergy]
+    return student
+
+
+def convert_students_allergy(students: list[schemas.Student]):
+    for student in students:
+        student = convert_student_allergy(student)
+    return students
 
 
 def create_student_list(
@@ -156,7 +167,7 @@ def create_student_list(
             number=student.number,
             is_male=student.is_male,
             description=student.description,
-            allergies=allergies(db, student.allergies),
+            allergy=allergy(db, student.allergy),
         )
         db_students.append(db_student)
     db_student_list = models.StudentList(
@@ -168,6 +179,7 @@ def create_student_list(
     db.add(db_student_list)
     db.commit()
     db.refresh(db_student_list)
+    db_student_list.students = convert_students_allergy(db_student_list.students)
     return db_student_list
 
 
@@ -179,7 +191,9 @@ def get_student_list(db: Session, email: str, list_id: int):
         .where(models.StudentList.id == list_id)
     )
     try:
-        return db.scalars(stmt).one()
+        db_student_list = db.scalars(stmt).one()
+        db_student_list.students = convert_students_allergy(db_student_list.students)
+        return db_student_list
     except NoResultFound:
         raise HTTPException(status_code=404, detail="해당하는 명렬표가 없습니다.")
 
@@ -192,6 +206,10 @@ def get_student_lists(db: Session, email: str):
     )
     db_student_lists = db.scalars(stmt).all()
     if db_student_lists:
+        for db_student_list in db_student_lists:
+            db_student_list.students = convert_students_allergy(
+                db_student_list.students
+            )
         return db_student_lists
     raise HTTPException(status_code=404, detail="명렬표가 없습니다.")
 
@@ -211,6 +229,7 @@ def update_student_list(
     db.flush()
     db.commit()
     db.refresh(db_student_list)
+    db_student_list.students = convert_students_allergy(db_student_list.students)
     return db_student_list
 
 
@@ -223,7 +242,8 @@ def get_student(db: Session, email: str, student_id: int):
         .where(models.Student.id == student_id)
     )
     try:
-        return db.scalars(stmt).one()
+        db_student = db.scalars(stmt).one()
+        return convert_student_allergy(db_student)
     except NoResultFound:
         raise HTTPException(status_code=404, detail="해당하는 학생이 없습니다.")
 
@@ -239,13 +259,13 @@ def create_student(
         number=student.number,
         is_male=student.is_male,
         description=student.description,
-        allergies=allergies(db, student.allergies),
+        allergy=allergy(db, student.allergy),
     )
 
     db_student_list.students.append(db_student)
     db.commit()
     db.refresh(db_student)
-    return db_student
+    return convert_student_allergy(db_student)
 
 
 def update_student(
@@ -256,12 +276,12 @@ def update_student(
     db_student.number = student.number
     db_student.is_male = student.is_male
     db_student.description = student.description
-    db_student.allergies = allergies(db, student.allergies)
+    db_student.allergy = allergy(db, student.allergy)
 
     db.flush()
     db.commit()
     db.refresh(db_student)
-    return db_student
+    return convert_student_allergy(db_student)
 
 
 def delete_student(db: Session, email: str, student_id: int):
