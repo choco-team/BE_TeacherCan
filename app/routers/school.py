@@ -91,14 +91,11 @@ async def get_menu(
         menu["menu"] = [
             {
                 "dish": dish,
-                "allergy": crud.allergy(
-                    db,
-                    [
-                        int(allergy)
-                        for allergy in allergies.strip("()").split(".")
-                        if allergy
-                    ],
-                ),
+                "allergy": [
+                    int(allergy)
+                    for allergy in allergies.strip("()").split(".")
+                    if allergy
+                ],
             }
             for dish, *_, allergies in [
                 dish_info.split(" ") for dish_info in menu["DDISH_NM"].split("<br/>")
