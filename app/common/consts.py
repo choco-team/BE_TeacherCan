@@ -8,7 +8,7 @@ env.read_env(env.str("ENV_PATH", ".env"))
 ALLOWED_HOSTS: list = env("ALLOWED_HOSTS").split(" ")
 
 # database
-DB_URL = "sqlite:///./db.sqlite3"
+DB_URL = f"postgresql://{env('DB_USER')}:{env('DB_PASSWORD')}@{env('DB_HOST')}/{env('DB_NAME')}"
 
 # jwt
 JWT_SECRET = env("JWT_SECRET")
