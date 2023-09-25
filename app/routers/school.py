@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Union
 from enum import Enum
 from datetime import date, timedelta, datetime
 
@@ -7,26 +7,29 @@ from sqlalchemy.orm import Session
 import requests
 
 from .. import crud, schemas
+from ..schemas import ResponseModel, ResponseWrapper
 from ..common.consts import NICE_API_KEY, NICE_URL
-from ..dependencies import get_db
-from .auth import verify_token
+from ..dependencies import get_db, user_email
+from ..errors import exceptions as ex
 
 
-router = APIRouter(prefix="/school", tags=["school"])
+router = APIRouter(prefix="/school", tags=["School"])
 
 
 base_params = {"Type": "json", "KEY": NICE_API_KEY}
 
 
 # 1. 학교정보 - 1. 학교 정보 검색
-@router.get("/list", status_code=200, response_model=schemas.SchoolLists)
+@router.get("/list", status_code=200, response_model=ResponseModel[schemas.SchoolLists])
 async def school_list(
     school_name: str | None = Query(None, alias="schoolName"),
     page_number: int | None = Query(1, alias="pageNumber"),
     data_size: int | None = Query(10, alias="dataSize"),
 ):
-    return crud.api_search_schools(
-        name=school_name, page_number=page_number, data_size=data_size
+    return ResponseWrapper(
+        crud.api_search_schools(
+            name=school_name, page_number=page_number, data_size=data_size
+        )
     )
 
 
@@ -36,20 +39,21 @@ class MenuType(Enum):
     day = "day"
 
 
-@router.get("/lunch-menu", status_code=200, response_model=list[schemas.SchoolMeal])
+@router.get(
+    "/lunch-menu",
+    status_code=200,
+    response_model=ResponseModel[list[schemas.SchoolMeal]],
+)
 async def get_menu(
-    date: Annotated[date | None, Query()],
     type: MenuType,
+    date: date,
     db: Session = Depends(get_db),
-    token_email: str = Depends(verify_token),
+    token_email: str = Depends(user_email),
 ):
     # 유저 정보 불러오기 from token
     db_user = crud.get_user(db, email=token_email)
     if not db_user.school:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No registered school information.",
-        )
+        raise ex.NotRegistSchool()
 
     # 파라미터 생성
     params = base_params.copy()
@@ -76,9 +80,7 @@ async def get_menu(
         if code == 200:  # 200: 해당하는 데이터가 없습니다.
             return []
         else:
-            raise HTTPException(
-                status_code=500, detail={"code": 500, "message": "내부 API호출 실패"}
-            )
+            raise ex.NiceApiError()
 
     # 스키마에 맞게 데이터 수정
     res_menu: list[str] = response["mealServiceDietInfo"][1]["row"]
@@ -109,5 +111,5 @@ async def get_menu(
             ]
         except:
             print(f"급식 데이터 파싱 실패, {res_menu}")
-            return []
-    return res_menu
+            return ResponseWrapper([])
+    return ResponseWrapper(res_menu)
