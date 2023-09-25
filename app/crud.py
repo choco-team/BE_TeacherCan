@@ -10,6 +10,7 @@ import requests
 
 from . import models, schemas
 from .common.consts import NICE_URL, NICE_API_KEY
+from .errors import exceptions as ex
 
 
 # User
@@ -18,35 +19,19 @@ def get_user(
 ) -> models.User | None:
     user = db.query(models.User).filter(models.User.email == email).first()
     if not_found_error and not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Not Found User."
-        )
+        raise ex.NotFoundUser()
     return user
 
 
 def create_user(db: Session, user: schemas.UserCreate):
     if get_user(db, email=user.email, not_found_error=False):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="User Already Exists."
-        )
+        raise ex.EmailAlreadyExist()
 
     # password validation
     try:
         validate_password(user.password)
     except ValidationError as error:
-        message = ""
-        for error_message in error.messages:
-            message = f"{message} {error_message}"
-        raise HTTPException(
-            status_code=422,
-            detail=[
-                {
-                    "loc": ["body", "password"],
-                    "msg": message.lstrip(),
-                    "type": "value_error.password",
-                }
-            ],
-        )
+        raise ex.PasswordInvalid(data=error.messages)
 
     hashed_password = make_password(user.password)
     db_user = models.User(
@@ -75,6 +60,7 @@ def update_user(db: Session, email: str, user: schemas.UserUpdate):
     return db_user
 
 
+# School
 def api_search_schools(
     name: str | None = None,
     code: str | None = None,
@@ -92,7 +78,7 @@ def api_search_schools(
     try:
         response = requests.get(f"{NICE_URL}/schoolInfo", params=params).json()
     except:
-        raise HTTPException(status_code=500, detail="교육정보포털 api 에러")
+        raise ex.NiceApiError()
 
     try:
         school_info = response["schoolInfo"]
@@ -112,16 +98,11 @@ def api_search_schools(
         code = int(response["RESULT"]["CODE"].split("-")[1])
         # 200: 해당하는 데이터가 없습니다. / 336: 데이터요청은 한번에 최대 1,000건을 넘을 수 없습니다
         if code == 200:
-            raise HTTPException(status_code=404, detail="해당하는 학교가 없습니다.")
+            raise ex.NotFoundSchool()
         elif code == 336:
-            raise HTTPException(
-                status_code=400,
-                detail={"code": 400, "message": response["RESULT"]["MESSAGE"]},
-            )
+            raise ex.TooLargeEntity()
         else:
-            raise HTTPException(
-                status_code=500, detail={"code": 500, "message": "내부 API호출 실패"}
-            )
+            raise Exception()
 
 
 def get_school(db: Session, code: str | None = None):
@@ -145,6 +126,7 @@ def allergy(db: Session, codes: list[int]):
     return db_allergy
 
 
+# Student
 def convert_student_allergy(student: schemas.Student):
     student.allergies = [allergy.code for allergy in student.allergy]
     return student
@@ -195,7 +177,7 @@ def get_student_list(db: Session, email: str, list_id: int):
         db_student_list.students = convert_students_allergy(db_student_list.students)
         return db_student_list
     except NoResultFound:
-        raise HTTPException(status_code=404, detail="해당하는 명렬표가 없습니다.")
+        raise ex.NotFoundStudentList()
 
 
 def get_student_lists(db: Session, email: str):
@@ -211,7 +193,7 @@ def get_student_lists(db: Session, email: str):
                 db_student_list.students
             )
         return db_student_lists
-    raise HTTPException(status_code=404, detail="명렬표가 없습니다.")
+    raise ex.NotExistStudentList()
 
 
 def delete_student_list(db: Session, email: str, list_id: int):
@@ -245,7 +227,7 @@ def get_student(db: Session, email: str, student_id: int):
         db_student = db.scalars(stmt).one()
         return convert_student_allergy(db_student)
     except NoResultFound:
-        raise HTTPException(status_code=404, detail="해당하는 학생이 없습니다.")
+        raise ex.NotFoundStudent()
 
 
 def create_student(
