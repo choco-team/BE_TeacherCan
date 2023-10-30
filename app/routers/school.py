@@ -78,7 +78,7 @@ async def get_menu(
     except:
         code = int(response["RESULT"]["CODE"].split("-")[1])
         if code == 200:  # 200: 해당하는 데이터가 없습니다.
-            return []
+            return ResponseWrapper([])
         else:
             raise ex.NiceApiError()
 
