@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 from django.core.exceptions import ValidationError
@@ -270,3 +270,48 @@ def delete_student(db: Session, email: str, student_id: int):
     db_student = get_student(db, email, student_id)
     db.delete(db_student)
     db.commit()
+
+
+def get_column(db: Session, column: schemas.ColumnCreate):
+    stmt = (
+        select(models.Columns)
+        .where(models.Columns.field == column.field)
+        .where(
+            or_(
+                models.Columns.student_list_id == column.student_list_id,
+                models.Columns.student_id.in_(column.student_id),
+            )
+        )
+        .order_by(models.Columns.id)
+    )
+    columns = db.scalars(stmt).all()
+    return columns
+
+
+def create_column(db: Session, email: str, column: schemas.ColumnCreate):
+    db_column = models.Columns(
+        field=column.field,
+        student_list_id=column.student_list_id,
+    )
+    db.add(db_column)
+    for id in column.student_id:
+        db.add(
+            models.Columns(
+                field=column.field,
+                student_id=id,
+            )
+        )
+
+    db.commit()
+    db.refresh(db_column)
+    return get_student_list(db, email, column.student_list_id)
+
+
+def update_column(db: Session, column: schemas.ColumnUpdate, email: str):
+    print(column)
+    columns = get_column(db, column)
+    for col, val in zip(columns[1:], column.value):
+        col.value = val
+    db.flush()
+    db.commit()
+    return get_student_list(db, email, column.student_list_id)

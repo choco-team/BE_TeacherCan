@@ -61,7 +61,12 @@ class StudentList(Base):
     is_main = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    description = Column(Text, nullable=True)
+    has_allergy = Column(Boolean, default=False)
 
+    columns = relationship(
+        "Columns", back_populates="student_list", cascade="all, delete"
+    )
     user = relationship("User", back_populates="student_list")
     students = relationship(
         "Student", back_populates="student_list", cascade="all, delete"
@@ -105,8 +110,33 @@ class Student(Base):
 
     student_list = relationship("StudentList", back_populates="students")
     allergy = relationship(
-        "Allergy", secondary=student_allergy_table, back_populates="students"
+        "Allergy",
+        secondary=student_allergy_table,
+        back_populates="students",
     )
+    columns = relationship("Columns", back_populates="students")
 
     def __repr__(self):
         return f"Student(id={self.id}, name={self.name}, number={self.number}, is_male={self.is_male}, allergy={[allergy.code for allergy in self.allergy]}"
+
+
+class Columns(Base):
+    __tablename__ = "users_column"
+
+    id = Column(Integer, primary_key=True)
+    field = Column(String(20))
+    value = Column(Text, nullable=True)
+    student_id = Column(
+        Integer, ForeignKey("users_student.id", ondelete="CASCADE"), nullable=True
+    )
+    student_list_id = Column(
+        Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE"), nullable=True
+    )
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    students = relationship("Student", back_populates="columns")
+    student_list = relationship("StudentList", back_populates="columns")
+
+    def __repr__(self):
+        return f"{self.id}"
