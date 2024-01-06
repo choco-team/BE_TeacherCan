@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, School, StudentList, Student, Allergy
+from .models import User, School, StudentList, Student, Allergy, Column
 
 
 class SchoolInline(admin.TabularInline):
@@ -107,3 +107,4 @@ admin.site.register(School, SchoolAdmin)
 admin.site.register(StudentList)
 admin.site.register(Student)
 admin.site.register(Allergy)
+admin.site.register(Column)

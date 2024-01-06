@@ -166,6 +166,28 @@ User.model_rebuild()
 
 
 # Student List
+
+
+class ColumnBase(BaseModel):
+    field: str = Field(...)
+
+
+class ColumnCreate(ColumnBase):
+    student_list_id: int = Field(..., alias="studentListId")
+    student_id: list[int] = Field(..., alias="studentId")
+
+
+class ColumnUpdate(ColumnCreate):
+    value: list[str]
+
+
+class Column(ColumnBase):
+    id: int = Field(...)
+    value: str | None = Field(None)
+    created_at: datetime = Field(..., serialization_alias="createdAt")
+    updated_at: datetime = Field(..., serialization_alias="updatedAt")
+
+
 class StudentDelete(BaseModel):
     id: int = Field(...)
 
@@ -190,6 +212,10 @@ class Student(StudentDelete, StudentUpdate):
     model_config = ConfigDict(from_attributes=True)
 
 
+class StudentWithColumn(Student):
+    columns: list[Column]
+
+
 class StudentListDelete(BaseModel):
     id: int = Field(...)
 
@@ -197,6 +223,8 @@ class StudentListDelete(BaseModel):
 class StudentListUpdate(BaseModel):
     name: str = Field(...)
     is_main: bool | None = Field(False, alias="isMain")
+    description: str | None = Field(None)
+    has_allergy: bool = Field(False, alias="hasAllergy")
 
 
 class StudentListCreate(StudentListUpdate):
@@ -207,6 +235,12 @@ class StudentList(StudentListDelete, StudentListUpdate):
     is_main: bool = Field(..., serialization_alias="isMain")
     created_at: datetime = Field(..., serialization_alias="createdAt")
     updated_at: datetime = Field(..., serialization_alias="updatedAt")
-    students: list[Student]
+    columns: list[Column]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudentListWithStudent(StudentList):
+    students: list[StudentWithColumn]
 
     model_config = ConfigDict(from_attributes=True)

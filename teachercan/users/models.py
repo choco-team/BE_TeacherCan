@@ -93,6 +93,8 @@ class StudentList(models.Model):
     is_main = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    description = models.TextField(null=True, blank=True)
+    has_allergy = models.BooleanField(default=False)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -112,6 +114,17 @@ class Student(models.Model):
         StudentList, on_delete=models.CASCADE, db_column="list_id"
     )
     allergy = models.ManyToManyField(Allergy, db_column="allergy_code")
+
+
+class Column(models.Model):
+    field = models.CharField(max_length=20)
+    value = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    student = models.ForeignKey(to="Student", on_delete=models.CASCADE, null=True)
+    student_list = models.ForeignKey(
+        to="StudentList", on_delete=models.CASCADE, null=True
+    )
 
 
 # class User(AbstractBaseUser, PermissionsMixin):
