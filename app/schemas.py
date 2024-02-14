@@ -1,9 +1,9 @@
-from enum import Enum
-
 from datetime import date, datetime
 from typing import Optional, Generic, TypeVar, Type, Any, Union
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, create_model
+
+from .models import Gender
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -55,11 +55,6 @@ class ResponseWrapper(ResponseModel):
         self.data = data
 
 
-class GenderEnum(str, Enum):
-    남 = "남"
-    여 = "여"
-
-
 # User
 class Result(BaseModel):
     result: bool
@@ -88,7 +83,7 @@ class UserCreate(UserSignin):
 class User(UserBase):
     social_id: str | None = Field(None, serialization_alias="socialId")
     nickname: str | None = Field(None)
-    gender: GenderEnum = Field(...)
+    gender: Gender | None = Field(None)
     birthday: date | None = Field(None)
     last_login: datetime | None = Field(None, serialization_alias="lastLogin")
     joined_at: datetime = Field(serialization_alias="joinedAt")
@@ -203,14 +198,16 @@ class StudentDelete(BaseModel):
 class StudentCreate(BaseModel):
     number: int = Field(..., alias="StudentNumber")
     name: str = Field(..., alias="StudentName")
-    gender: GenderEnum = Field(GenderEnum.남)
+    gender: Gender = Field(Gender.남)
 
 
 class StudentUpdate(BaseModel):
-    number: int = Field(..., serialization_alias="StudentNumber")
-    name: str = Field(..., serialization_alias="StudentName")
-    gender: GenderEnum = Field(...)
+    id: int = Field(...)
+    number: int = Field(..., alias="StudentNumber")
+    name: str = Field(..., alias="StudentName")
+    gender: Gender = Field(...)
     allergy: list[int] | None = Field(None)
+    rows: list[Row] = Field([], alias="columns")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -218,13 +215,14 @@ class StudentUpdate(BaseModel):
 class Student(BaseModel):
     number: int = Field(..., serialization_alias="StudentNumber")
     name: str = Field(..., serialization_alias="StudentName")
-    gender: GenderEnum = Field(...)
+    gender: Gender = Field(...)
     allergy: list[int] | None = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class StudentWithColumn(Student):
+    id: int = Field(...)
     rows: list[Row] = Field([], serialization_alias="columns")
 
     model_config = ConfigDict(from_attributes=True)
@@ -238,7 +236,9 @@ class StudentListUpdate(BaseModel):
     id: int = Field(...)
     name: str = Field(...)
     is_main: bool | None = Field(False, alias="isMain")
-    has_allergy: bool = Field(False, alias="allergyYn")
+    has_allergy: bool = Field(False, alias="hasAllergy")
+    columns: list[Column] = Field(...)
+    students: list[StudentUpdate]
 
 
 class StudentListCreate(BaseModel):
