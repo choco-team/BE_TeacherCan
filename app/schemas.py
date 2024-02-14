@@ -1,3 +1,5 @@
+from enum import Enum
+
 from datetime import date, datetime
 from typing import Optional, Generic, TypeVar, Type, Any, Union
 
@@ -53,6 +55,11 @@ class ResponseWrapper(ResponseModel):
         self.data = data
 
 
+class GenderEnum(str, Enum):
+    남 = "남"
+    여 = "여"
+
+
 # User
 class Result(BaseModel):
     result: bool
@@ -81,7 +88,7 @@ class UserCreate(UserSignin):
 class User(UserBase):
     social_id: str | None = Field(None, serialization_alias="socialId")
     nickname: str | None = Field(None)
-    is_male: bool | None = Field(None, serialization_alias="isMale")
+    gender: GenderEnum = Field(...)
     birthday: date | None = Field(None)
     last_login: datetime | None = Field(None, serialization_alias="lastLogin")
     joined_at: datetime = Field(serialization_alias="joinedAt")
@@ -102,8 +109,7 @@ class UserUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserDelete(UserBase):
-    ...
+class UserDelete(UserBase): ...
 
 
 class SchoolBase(BaseModel):
@@ -183,9 +189,11 @@ class ColumnUpdate(ColumnCreate):
 
 class Column(ColumnBase):
     id: int = Field(...)
+
+
+class Row(BaseModel):
+    id: int = Field(...)
     value: str | None = Field(None)
-    created_at: datetime = Field(..., serialization_alias="createdAt")
-    updated_at: datetime = Field(..., serialization_alias="updatedAt")
 
 
 class StudentDelete(BaseModel):
@@ -193,27 +201,33 @@ class StudentDelete(BaseModel):
 
 
 class StudentCreate(BaseModel):
-    number: int = Field(...)
-    name: str = Field(...)
-    is_male: bool = Field(..., alias="isMale")
-    description: str | None = Field(None)
-    allergy: list[int] | None
+    number: int = Field(..., alias="StudentNumber")
+    name: str = Field(..., alias="StudentName")
+    gender: GenderEnum = Field(GenderEnum.남)
 
 
-class StudentUpdate(StudentCreate):
-    ...
+class StudentUpdate(BaseModel):
+    number: int = Field(..., serialization_alias="StudentNumber")
+    name: str = Field(..., serialization_alias="StudentName")
+    gender: GenderEnum = Field(...)
+    allergy: list[int] | None = Field(None)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class Student(StudentDelete, StudentUpdate):
-    is_male: bool = Field(serialization_alias="isMale")
-    allergy: list[Allergy] = Field([])
-    allergies: list[int] = Field([], serialization_alias="allergy")
+class Student(BaseModel):
+    number: int = Field(..., serialization_alias="StudentNumber")
+    name: str = Field(..., serialization_alias="StudentName")
+    gender: GenderEnum = Field(...)
+    allergy: list[int] | None = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class StudentWithColumn(Student):
-    columns: list[Column]
+    rows: list[Row] = Field([], serialization_alias="columns")
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StudentListDelete(BaseModel):
@@ -221,26 +235,31 @@ class StudentListDelete(BaseModel):
 
 
 class StudentListUpdate(BaseModel):
+    id: int = Field(...)
     name: str = Field(...)
     is_main: bool | None = Field(False, alias="isMain")
-    description: str | None = Field(None)
-    has_allergy: bool = Field(False, alias="hasAllergy")
+    has_allergy: bool = Field(False, alias="allergyYn")
 
 
-class StudentListCreate(StudentListUpdate):
+class StudentListCreate(BaseModel):
+    name: str = Field(...)
+    has_allergy: bool = Field(False, alias="allergyYn")
     students: list[StudentCreate]
 
 
-class StudentList(StudentListDelete, StudentListUpdate):
+class StudentList(BaseModel):
+    id: int = Field(...)
+    name: str = Field(...)
     is_main: bool = Field(..., serialization_alias="isMain")
+    has_allergy: bool = Field(False, serialization_alias="hasAllergy")
     created_at: datetime = Field(..., serialization_alias="createdAt")
     updated_at: datetime = Field(..., serialization_alias="updatedAt")
-    columns: list[Column]
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class StudentListWithStudent(StudentList):
+    columns: list[Column]
     students: list[StudentWithColumn]
 
     model_config = ConfigDict(from_attributes=True)

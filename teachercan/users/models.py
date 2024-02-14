@@ -19,6 +19,9 @@ class School(models.Model):
     area_code = models.CharField(max_length=10, null=False)
     name = models.CharField(max_length=10, null=False)
 
+    class Meta:
+        db_table = "school"
+
     def __str__(self):
         return self.name
 
@@ -65,11 +68,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_index=True,
         max_length=50,
         null=False,
-        help_text=_("닉네임을 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."),
+        help_text=_(
+            "닉네임을 입력해주세요. 문자, 숫자, 특수문자는 @/./+/-/_ 만 가능합니다."
+        ),
         validators=[nickname_validator],
     )
     school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
-    is_male = models.BooleanField(null=True)
+    gender = models.CharField(
+        max_length=2, choices=[("남", "남"), ("여", "여")], default="남"
+    )
     birthday = models.DateField(null=True, blank=True)
     joined_at = models.DateTimeField(_("date joined"), default=timezone.now)
     avatar_sgv = models.CharField(max_length=50, null=True)
@@ -80,6 +87,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     class Meta:
+        db_table = "user"
         verbose_name = _("user")
         verbose_name_plural = _("users")
 
@@ -93,38 +101,63 @@ class StudentList(models.Model):
     is_main = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    description = models.TextField(null=True, blank=True)
     has_allergy = models.BooleanField(default=False)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "student_list"
 
 
 class Allergy(models.Model):
     code = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=20)
 
+    class Meta:
+        db_table = "allergy"
+
+
+class StudentAllergyRelation(models.Model):
+    student = models.ForeignKey(to="Student", on_delete=models.CASCADE)
+    allergy = models.ForeignKey(to="Allergy", on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "student_allergy_set"
+
 
 class Student(models.Model):
     name = models.CharField(max_length=10)
     number = models.IntegerField()
-    is_male = models.BooleanField()
-    description = models.TextField(null=True, blank=True)
+    gender = models.CharField(
+        max_length=2, choices=[("남", "남"), ("여", "여")], default="남"
+    )
 
     student_list = models.ForeignKey(
         StudentList, on_delete=models.CASCADE, db_column="list_id"
     )
-    allergy = models.ManyToManyField(Allergy, db_column="allergy_code")
+    allergy = models.ManyToManyField(to="Allergy", through="StudentAllergyRelation")
+
+    class Meta:
+        db_table = "student"
 
 
 class Column(models.Model):
     field = models.CharField(max_length=20)
-    value = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    student = models.ForeignKey(to="Student", on_delete=models.CASCADE, null=True)
     student_list = models.ForeignKey(
         to="StudentList", on_delete=models.CASCADE, null=True
     )
+
+    class Meta:
+        db_table = "student_list_column"
+
+
+class Row(models.Model):
+    value = models.CharField(max_length=100)
+    column = models.ForeignKey(to="Column", on_delete=models.CASCADE)
+    student = models.ForeignKey(to="Student", on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "student_list_row"
 
 
 # class User(AbstractBaseUser, PermissionsMixin):
