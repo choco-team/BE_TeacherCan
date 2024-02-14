@@ -19,12 +19,12 @@ from .database import Base
 
 
 class Gender(enum.Enum):
-    남 = ("남",)
+    남 = "남"
     여 = "여"
 
 
 class School(Base):
-    __tablename__ = "users_school"
+    __tablename__ = "school"
 
     code = Column(String(10), primary_key=True, nullable=False, unique=True)
     area_code = Column(String(10), nullable=False)
@@ -37,14 +37,14 @@ class School(Base):
 
 
 class User(Base):
-    __tablename__ = "users_user"
+    __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(50), nullable=False, unique=True, index=True)
     social_id = Column(String(50))
     password = Column(String(100), nullable=False)
     nickname = Column(String(50))
-    school_id = Column(String(10), ForeignKey("users_school.code"))
+    school_id = Column(String(10), ForeignKey("school.code"))
     gender = Column(Enum(Gender))
     birthday = Column(Date)
     last_login = Column(DateTime)
@@ -61,20 +61,20 @@ class User(Base):
 
 
 class StudentList(Base):
-    __tablename__ = "users_studentlist"
+    __tablename__ = "student_list"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(15))
-    user_id = Column(Integer, ForeignKey("users_user.id"))
+    user_id = Column(Integer, ForeignKey("user.id"))
     is_main = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     has_allergy = Column(Boolean, default=False)
 
+    user = relationship("User", back_populates="student_list")
     columns = relationship(
         "Columns", back_populates="student_list", cascade="all, delete"
     )
-    user = relationship("User", back_populates="student_list")
     students = relationship(
         "Student", back_populates="student_list", cascade="all, delete"
     )
@@ -84,15 +84,15 @@ class StudentList(Base):
 
 
 student_allergy_table = Table(
-    "users_student_allergy",
+    "student_allergy_set",
     Base.metadata,
-    Column("student_id", ForeignKey("users_student.id"), primary_key=True),
-    Column("allergy_id", ForeignKey("users_allergy.code"), primary_key=True),
+    Column("student_id", ForeignKey("student.id"), primary_key=True),
+    Column("allergy_id", ForeignKey("allergy.code"), primary_key=True),
 )
 
 
 class Allergy(Base):
-    __tablename__ = "users_allergy"
+    __tablename__ = "allergy"
 
     code = Column(Integer, primary_key=True)
     name = Column(String(20))
@@ -106,13 +106,13 @@ class Allergy(Base):
 
 
 class Student(Base):
-    __tablename__ = "users_student"
+    __tablename__ = "student"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(10))
     number = Column(Integer)
     gender = Column(Enum(Gender))
-    list_id = Column(Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE"))
+    list_id = Column(Integer, ForeignKey("student_list.id", ondelete="CASCADE"))
 
     student_list = relationship("StudentList", back_populates="students")
     allergy = relationship(
@@ -127,13 +127,11 @@ class Student(Base):
 
 
 class Columns(Base):
-    __tablename__ = "users_column"
+    __tablename__ = "student_list_column"
 
     id = Column(Integer, primary_key=True)
     field = Column(String(20))
-    student_list_id = Column(
-        Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE")
-    )
+    student_list_id = Column(Integer, ForeignKey("student_list.id", ondelete="CASCADE"))
 
     student_list = relationship("StudentList", back_populates="columns")
     rows = relationship("Rows", back_populates="column")
@@ -143,13 +141,15 @@ class Columns(Base):
 
 
 class Rows(Base):
-    __tablename__ = "users_row"
+    __tablename__ = "row"
 
     id = Column(Integer, primary_key=True)
     value = Column(String(100))
 
-    column_id = Column(Integer, ForeignKey("users_column.id", ondelete="CASCADE"))
-    student_id = Column(Integer, ForeignKey("users_student.id", ondelete="CASCADE"))
+    column_id = Column(
+        Integer, ForeignKey("student_list_column.id", ondelete="CASCADE")
+    )
+    student_id = Column(Integer, ForeignKey("student.id", ondelete="CASCADE"))
 
-    column = relationship("Columns", back_populates="column")
+    column = relationship("Columns", back_populates="rows")
     student = relationship("Student", back_populates="rows")

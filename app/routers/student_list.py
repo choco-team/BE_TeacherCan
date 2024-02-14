@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
-from teachercan.users.models import StudentList, Student, User
+from teachercan.users.models import StudentList, Student, User, Column, Allergy, Row
 
 from .. import crud, schemas
 from ..schemas import ResponseModel, ResponseWrapper
@@ -47,7 +47,7 @@ def student_list(list_id: int, user: str = Depends(user)):
         for column in q.column_set.all()
     ]
     students = [
-        schemas.Student(
+        schemas.StudentWithColumn(
             id=e.id,
             number=e.number,
             name=e.name,
@@ -159,7 +159,7 @@ def student_list(
 @router.put(
     "/list",
     status_code=status.HTTP_200_OK,
-    response_model=ResponseModel[schemas.StudentList],
+    response_model=ResponseModel[schemas.StudentListWithStudent],
 )
 def student_list(
     student_list: schemas.StudentListUpdate,
@@ -174,11 +174,81 @@ def student_list(
     }
     """
     try:
-        s_l = StudentList.objects.get(id=student_list.id, user=user)
+        updated_student_list = StudentList.objects.get(id=student_list.id, user=user)
     except ObjectDoesNotExist:
-        raise ex.NotExistStudentList
+        raise ex.NotExistStudentList()
 
-    return ResponseWrapper()
+    with transaction.atomic():
+        updated_student_list.name = student_list.name
+        if student_list.is_main:
+            tmp = StudentList.objects.get(user=user, is_main=True)
+            tmp.is_main = False
+            tmp.save()
+        updated_student_list.is_main = student_list.is_main
+        updated_student_list.has_allergy = student_list.has_allergy
+        updated_student_list.save()
+        for column in student_list.columns:
+            try:
+                col = Column.objects.get(
+                    id=column.id, student_list=updated_student_list
+                )
+            except ObjectDoesNotExist:
+                raise ex.NotExistStudentList()
+            col.field = column.field
+            col.save()
+
+        for student in student_list.students:
+            try:
+                s = Student.objects.get(
+                    id=student.id, student_list=updated_student_list
+                )
+            except ObjectDoesNotExist:
+                raise ex.NotFoundStudent()
+            s.number = student.number
+            s.name = student.name
+            s.gender = student.gender
+            if updated_student_list.has_allergy and student.allergy:
+                s.allergy.set([Allergy.objects.get(pk=a) for a in student.allergy])
+            for row in student.rows:
+                try:
+                    r = Row.objects.get(column=col, student=s)
+                    r.value = row.value
+                    r.save()
+                except ObjectDoesNotExist:
+                    raise ex.NotFoundStudent()
+            s.save()
+
+    res_students = []
+    for s in updated_student_list.student_set.all():
+        res_rows = []
+        for r in s.row_set.all():
+            res_row = schemas.Row(id=col.id, value=r.value)
+            res_rows.append(res_row)
+        res_student = schemas.StudentWithColumn(
+            id=s.id,
+            number=s.number,
+            name=s.name,
+            gender=s.gender,
+            allergy=[e.code for e in s.allergy.all()],
+            rows=res_rows,
+        )
+        res_students.append(res_student)
+
+    res_student_list = schemas.StudentListWithStudent(
+        id=updated_student_list.id,
+        name=updated_student_list.name,
+        is_main=updated_student_list.is_main,
+        has_allergy=updated_student_list.has_allergy,
+        created_at=updated_student_list.created_at,
+        updated_at=updated_student_list.updated_at,
+        columns=[
+            schemas.Column(id=e.id, field=e.field)
+            for e in updated_student_list.column_set.all()
+        ],
+        students=res_students,
+    )
+
+    return ResponseWrapper(res_student_list)
 
 
 @router.post(
