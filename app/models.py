@@ -41,18 +41,16 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(50), nullable=False, unique=True, index=True)
-    social_id = Column(String(50))
     password = Column(String(100), nullable=False)
+    social_id = Column(String(50))
     nickname = Column(String(50))
-    school_id = Column(String(10), ForeignKey("users_school.code"))
     gender = Column(Enum(Gender))
     birthday = Column(Date)
-    last_login = Column(DateTime)
-    joined_at = Column(DateTime, default=func.now())
     avatar_sgv = Column(String(50))
+    joined_at = Column(DateTime, default=func.now())
     is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)
 
+    school_id = Column(String(10), ForeignKey("users_school.code"))
     school = relationship("School", back_populates="users")
     student_list = relationship("StudentList", back_populates="user")
 
@@ -65,16 +63,18 @@ class StudentList(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(15))
-    user_id = Column(Integer, ForeignKey("users_user.id"))
     is_main = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     has_allergy = Column(Boolean, default=False)
 
+    user_id = Column(Integer, ForeignKey("users_user.id"))
+    user = relationship("User", back_populates="student_list")
+
+
     columns = relationship(
         "Columns", back_populates="student_list", cascade="all, delete"
     )
-    user = relationship("User", back_populates="student_list")
     students = relationship(
         "Student", back_populates="student_list", cascade="all, delete"
     )
@@ -112,9 +112,10 @@ class Student(Base):
     name = Column(String(10))
     number = Column(Integer)
     gender = Column(Enum(Gender))
-    list_id = Column(Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE"))
 
+    list_id = Column(Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE"))
     student_list = relationship("StudentList", back_populates="students")
+    
     allergy = relationship(
         "Allergy",
         secondary=student_allergy_table,
@@ -125,22 +126,21 @@ class Student(Base):
     def __repr__(self):
         return f"Student(id={self.id}, name={self.name}, number={self.number}, gender={self.gender}, allergy={[allergy.code for allergy in self.allergy]}"
 
-
 class Columns(Base):
     __tablename__ = "users_column"
 
     id = Column(Integer, primary_key=True)
     field = Column(String(20))
+
     student_list_id = Column(
         Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE")
     )
-
     student_list = relationship("StudentList", back_populates="columns")
+    
     rows = relationship("Rows", back_populates="column")
 
     def __repr__(self):
         return f"{self.id}"
-
 
 class Rows(Base):
     __tablename__ = "users_row"
@@ -151,5 +151,5 @@ class Rows(Base):
     column_id = Column(Integer, ForeignKey("users_column.id", ondelete="CASCADE"))
     student_id = Column(Integer, ForeignKey("users_student.id", ondelete="CASCADE"))
 
-    column = relationship("Columns", back_populates="column")
+    column = relationship("Columns", back_populates="rows")
     student = relationship("Student", back_populates="rows")

@@ -9,7 +9,7 @@ router = APIRouter(prefix="/user", tags=["User"])
 
 
 # 1.개인 정보 조회
-@router.get("/info", status_code=200, response_model=ResponseModel[schemas.User])
+@router.get("/info", status_code=200, response_model=ResponseModel[schemas.Result])
 async def my_info(
     db: Session = Depends(get_db), token_email: str = Depends(user_email)
 ):
