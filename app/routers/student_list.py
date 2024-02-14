@@ -1,9 +1,14 @@
 from fastapi import Depends, APIRouter, status, Query, Body
 from sqlalchemy.orm import Session
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+
+from teachercan.users.models import StudentList, Student, User
 
 from .. import crud, schemas
 from ..schemas import ResponseModel, ResponseWrapper
-from ..dependencies import get_db, user_email
+from ..dependencies import get_db, user_email, user
+from ..errors import exceptions as ex
 
 router = APIRouter(prefix="/student", tags=["Student"])
 
@@ -12,15 +17,13 @@ router = APIRouter(prefix="/student", tags=["Student"])
 @router.get(
     "/list", status_code=200, response_model=ResponseModel[list[schemas.StudentList]]
 )
-async def student_list(
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
-):
+def student_list(user: User = Depends(user)):
     """
     모든 명렬표 보기(학생은 안보임)\n
     로그인만 하면 별도의 파라미터 없음
     """
-    return ResponseWrapper(crud.get_student_lists(db, token_email))
+    student_lists = StudentList.objects.filter(user=user)
+    return ResponseWrapper(student_lists)
 
 
 @router.get(
@@ -28,27 +31,54 @@ async def student_list(
     status_code=200,
     response_model=ResponseModel[schemas.StudentListWithStudent],
 )
-async def student_list(
-    list_id: int,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
-):
+def student_list(list_id: int, user: str = Depends(user)):
     """
     특정 명렬표 보기(학생까지 보임)\n
     파라미터 값은 명렬표 id
     """
-    return ResponseWrapper(crud.get_student_list(db, token_email, list_id))
+    try:
+        q = StudentList.objects.get(id=list_id, user=user)
+    # 명렬표 없을 때 예외 처리
+    except ObjectDoesNotExist:
+        raise ex.NotExistStudentList()
+
+    columns = [
+        schemas.Column(id=column.id, field=column.field)
+        for column in q.column_set.all()
+    ]
+    students = [
+        schemas.Student(
+            id=e.id,
+            number=e.number,
+            name=e.name,
+            gender=e.gender,
+            allergy=[a.code for a in e.allergy.all()] if q.has_allergy else None,
+            rows=[{"id": r.column.id, "value": r.value} for r in e.row_set.all()],
+        )
+        for e in q.student_set.all()
+    ]
+    return ResponseWrapper(
+        schemas.StudentListWithStudent(
+            id=q.id,
+            name=q.name,
+            is_main=q.is_main,
+            has_allergy=q.has_allergy,
+            created_at=q.created_at,
+            updated_at=q.updated_at,
+            columns=columns,
+            students=students,
+        )
+    )
 
 
 @router.post(
     "/list",
     status_code=status.HTTP_201_CREATED,
-    response_model=ResponseModel[schemas.StudentList],
+    response_model=ResponseModel[schemas.StudentListWithStudent],
 )
-async def student_list(
+def student_list(
     student_list: schemas.StudentListCreate,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
+    user: str = Depends(user),
 ):
     """
     {\n
@@ -74,32 +104,66 @@ async def student_list(
         ]
     }
     """
-    return ResponseWrapper(crud.create_student_list(db, token_email, student_list))
+
+    new_student_list = StudentList(
+        name=student_list.name,
+        has_allergy=student_list.has_allergy,
+        is_main=not user.studentlist_set.count(),
+        user=user,
+    )
+    students = [
+        Student(
+            number=s.number, name=s.name, gender=s.gender, student_list=new_student_list
+        )
+        for s in student_list.students
+    ]
+    # db 트랜잭션
+    with transaction.atomic():
+        new_student_list.save()
+        for s in students:
+            s.save()
+
+    new_student_list.students = [
+        schemas.Student(
+            id=s.id,
+            number=s.number,
+            name=s.name,
+            gender=s.gender,
+            allergy=[] if student_list.has_allergy else None,
+            rows=[],
+        )
+        for s in students
+    ]
+
+    new_student_list.columns = []
+    return ResponseWrapper(new_student_list)
 
 
 @router.delete("/list/{list_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def student_list(
+def student_list(
     list_id: int,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
+    user: str = Depends(user),
 ):
     """
     명렬표 지우기(학생까지 다 지워짐)\n
     파라미터 값은 명렬표 id
     """
-    return ResponseWrapper(crud.delete_student_list(db, token_email, list_id))
+    try:
+        student_list = StudentList.objects.get(id=list_id, user=user)
+    except ObjectDoesNotExist:
+        raise ex.NotFoundStudentList()
+    student_list.delete()
+    return ResponseWrapper(data=None)
 
 
 @router.put(
-    "/list/{list_id}",
+    "/list",
     status_code=status.HTTP_200_OK,
     response_model=ResponseModel[schemas.StudentList],
 )
-async def student_list(
-    list_id: int,
+def student_list(
     student_list: schemas.StudentListUpdate,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
+    user: str = Depends(user),
 ):
     """
     {\n
@@ -109,9 +173,12 @@ async def student_list(
         "hasAllergy": true
     }
     """
-    return ResponseWrapper(
-        crud.update_student_list(db, token_email, list_id, student_list)
-    )
+    try:
+        s_l = StudentList.objects.get(id=student_list.id, user=user)
+    except ObjectDoesNotExist:
+        raise ex.NotExistStudentList
+
+    return ResponseWrapper()
 
 
 @router.post(

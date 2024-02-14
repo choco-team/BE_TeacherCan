@@ -1,3 +1,5 @@
+import enum
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -8,11 +10,17 @@ from sqlalchemy import (
     DateTime,
     Date,
     Table,
+    Enum,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .database import Base
+
+
+class Gender(enum.Enum):
+    남 = ("남",)
+    여 = "여"
 
 
 class School(Base):
@@ -37,7 +45,7 @@ class User(Base):
     password = Column(String(100), nullable=False)
     nickname = Column(String(50))
     school_id = Column(String(10), ForeignKey("users_school.code"))
-    is_male = Column(Boolean)
+    gender = Column(Enum(Gender))
     birthday = Column(Date)
     last_login = Column(DateTime)
     joined_at = Column(DateTime, default=func.now())
@@ -61,7 +69,6 @@ class StudentList(Base):
     is_main = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    description = Column(Text, nullable=True)
     has_allergy = Column(Boolean, default=False)
 
     columns = relationship(
@@ -104,8 +111,7 @@ class Student(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(10))
     number = Column(Integer)
-    is_male = Column(Boolean)
-    description = Column(Text, nullable=True)
+    gender = Column(Enum(Gender))
     list_id = Column(Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE"))
 
     student_list = relationship("StudentList", back_populates="students")
@@ -114,10 +120,10 @@ class Student(Base):
         secondary=student_allergy_table,
         back_populates="students",
     )
-    columns = relationship("Columns", back_populates="students")
+    rows = relationship("Rows", back_populates="student")
 
     def __repr__(self):
-        return f"Student(id={self.id}, name={self.name}, number={self.number}, is_male={self.is_male}, allergy={[allergy.code for allergy in self.allergy]}"
+        return f"Student(id={self.id}, name={self.name}, number={self.number}, gender={self.gender}, allergy={[allergy.code for allergy in self.allergy]}"
 
 
 class Columns(Base):
@@ -125,18 +131,25 @@ class Columns(Base):
 
     id = Column(Integer, primary_key=True)
     field = Column(String(20))
-    value = Column(Text, nullable=True)
-    student_id = Column(
-        Integer, ForeignKey("users_student.id", ondelete="CASCADE"), nullable=True
-    )
     student_list_id = Column(
-        Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE"), nullable=True
+        Integer, ForeignKey("users_studentlist.id", ondelete="CASCADE")
     )
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
-    students = relationship("Student", back_populates="columns")
     student_list = relationship("StudentList", back_populates="columns")
+    rows = relationship("Rows", back_populates="column")
 
     def __repr__(self):
         return f"{self.id}"
+
+
+class Rows(Base):
+    __tablename__ = "users_row"
+
+    id = Column(Integer, primary_key=True)
+    value = Column(String(100))
+
+    column_id = Column(Integer, ForeignKey("users_column.id", ondelete="CASCADE"))
+    student_id = Column(Integer, ForeignKey("users_student.id", ondelete="CASCADE"))
+
+    column = relationship("Columns", back_populates="column")
+    student = relationship("Student", back_populates="rows")

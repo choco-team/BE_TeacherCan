@@ -6,6 +6,8 @@ from .database import SessionLocal
 from .errors import exceptions as ex
 from .common.consts import JWT_ALGORITHM, JWT_SECRET
 
+from teachercan.users.models import User
+
 
 async def get_db():
     db = SessionLocal()
@@ -36,3 +38,12 @@ def user_email(payload=Depends(verify_token)) -> str:
     if not email:
         raise ex.InvalidToken()
     return email
+
+
+# token payload에서 email 반환
+def user(payload=Depends(verify_token)) -> User:
+    email = payload.get("email")
+    user = User.objects.get(email=email)
+    if not user:
+        raise ex.InvalidToken()
+    return user

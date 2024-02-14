@@ -1,7 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, School, StudentList, Student, Allergy, Column
+from .models import (
+    User,
+    School,
+    StudentList,
+    Student,
+    Allergy,
+    Column,
+    Row,
+    StudentAllergyRelation,
+)
 
 
 class SchoolInline(admin.TabularInline):
@@ -102,9 +111,20 @@ class BaseUserAdmin(UserAdmin):
     readonly_fields = ("id",)
 
 
+class StudentAllergyInline(admin.TabularInline):
+    model = Student.allergy.through
+    extra = 1
+
+
+class StudentAdmin(admin.ModelAdmin):
+    inlines = (StudentAllergyInline,)
+
+
 admin.site.register(User, BaseUserAdmin)
 admin.site.register(School, SchoolAdmin)
 admin.site.register(StudentList)
-admin.site.register(Student)
+admin.site.register(Student, StudentAdmin)
 admin.site.register(Allergy)
 admin.site.register(Column)
+admin.site.register(Row)
+admin.site.register(StudentAllergyRelation)
