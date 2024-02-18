@@ -198,7 +198,7 @@ class StudentDelete(BaseModel):
 class StudentCreate(BaseModel):
     number: int = Field(..., alias="StudentNumber")
     name: str = Field(..., alias="StudentName")
-    gender: Gender = Field(Gender.남)
+    gender: Gender = Field(...)
 
 
 class StudentUpdate(BaseModel):
@@ -207,7 +207,7 @@ class StudentUpdate(BaseModel):
     name: str = Field(..., alias="StudentName")
     gender: Gender = Field(...)
     allergy: list[int] | None = Field(None)
-    rows: list[Row] = Field([], alias="columns")
+    rows: list[Row] = Field([])
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -221,9 +221,9 @@ class Student(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class StudentWithColumn(Student):
+class StudentWithRows(Student):
     id: int = Field(...)
-    rows: list[Row] = Field([], serialization_alias="columns")
+    rows: list[Row] = Field([])
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -257,9 +257,11 @@ class StudentList(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class StudentListWithStudent(StudentList):
     columns: list[Column]
-    students: list[StudentWithColumn]
+    students: list[StudentWithRows]
 
     model_config = ConfigDict(from_attributes=True)
+
+class GetStudentList(BaseModel):
+    StudentList: list[StudentList]

@@ -75,7 +75,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
     gender = models.CharField(
-        max_length=2, choices=[("남", "남"), ("여", "여")], default="남"
+        null=True, max_length=2, choices=[("남", "남"), ("여", "여")], default="남"
     )
     birthday = models.DateField(null=True, blank=True)
     joined_at = models.DateTimeField(_("date joined"), default=timezone.now)

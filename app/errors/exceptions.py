@@ -57,6 +57,11 @@ class Error:
         1403, "해당하는 학생이 존재하지 않아요.", status.HTTP_404_NOT_FOUND
     )
 
+    #Column
+    not_found_column = ErrorDetail(
+        1501, "요청하신 column이 존재하지 않아요.", status.HTTP_404_NOT_FOUND
+    )
+
     # 유효성 검사
     request_default_error = ErrorDetail(
         1003, "유효성 검사에서 문제가 발생했어요.", status.HTTP_400_BAD_REQUEST
@@ -277,3 +282,13 @@ class NotFoundStudent(APIException):
             message=Error.not_found_student.message,
             ex=ex,
         )
+
+class NotFoundColumn(APIException):
+    def __init__(self, ex: Exception = None):
+        super().__init__(
+            status_code=Error.not_found_column.status_code,
+            code=Error.not_found_column.code,
+            message=Error.not_found_column.message,
+            ex=ex,
+        )
+

@@ -2,6 +2,7 @@ from fastapi import Depends, APIRouter, status, Query, Body
 from sqlalchemy.orm import Session
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.core import serializers
 
 from teachercan.users.models import StudentList, Student, User, Column, Allergy, Row
 
@@ -15,15 +16,18 @@ router = APIRouter(prefix="/student", tags=["Student"])
 
 # 명렬표
 @router.get(
-    "/list", status_code=200, response_model=ResponseModel[list[schemas.StudentList]]
+    "/list", status_code=200, response_model=ResponseModel[schemas.GetStudentList]
 )
 def student_list(user: User = Depends(user)):
     """
     모든 명렬표 보기(학생은 안보임)\n
     로그인만 하면 별도의 파라미터 없음
     """
-    student_lists = StudentList.objects.filter(user=user)
-    return ResponseWrapper(student_lists)
+    return ResponseWrapper(
+        schemas.GetStudentList(
+            StudentList=StudentList.objects.filter(user=user)
+        )
+    )
 
 
 @router.get(
@@ -41,7 +45,6 @@ def student_list(list_id: int, user: str = Depends(user)):
     # 명렬표 없을 때 예외 처리
     except ObjectDoesNotExist:
         raise ex.NotExistStudentList()
-
     columns = [
         schemas.Column(id=column.id, field=column.field)
         for column in q.column_set.all()
@@ -104,7 +107,6 @@ def student_list(
         ]
     }
     """
-
     new_student_list = StudentList(
         name=student_list.name,
         has_allergy=student_list.has_allergy,
@@ -117,6 +119,7 @@ def student_list(
         )
         for s in student_list.students
     ]
+    print(type(student_list.students[0].gender))
     # db 트랜잭션
     with transaction.atomic():
         new_student_list.save()
@@ -124,7 +127,7 @@ def student_list(
             s.save()
 
     new_student_list.students = [
-        schemas.Student(
+        schemas.StudentWithColumn(
             id=s.id,
             number=s.number,
             name=s.name,
@@ -165,14 +168,6 @@ def student_list(
     student_list: schemas.StudentListUpdate,
     user: str = Depends(user),
 ):
-    """
-    {\n
-        "name": "새로운 명렬표 이름",
-        "isMain": true,
-        "description": "새로운 명렬표 설명",
-        "hasAllergy": true
-    }
-    """
     try:
         updated_student_list = StudentList.objects.get(id=student_list.id, user=user)
     except ObjectDoesNotExist:
@@ -193,7 +188,7 @@ def student_list(
                     id=column.id, student_list=updated_student_list
                 )
             except ObjectDoesNotExist:
-                raise ex.NotExistStudentList()
+                raise ex.NotFoundColumn()
             col.field = column.field
             col.save()
 
@@ -224,7 +219,7 @@ def student_list(
         for r in s.row_set.all():
             res_row = schemas.Row(id=col.id, value=r.value)
             res_rows.append(res_row)
-        res_student = schemas.StudentWithColumn(
+        res_student = schemas.StudentWithRows(
             id=s.id,
             number=s.number,
             name=s.name,
