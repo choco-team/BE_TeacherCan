@@ -1,4 +1,4 @@
-import enum
+from enum import Enum
 
 from sqlalchemy import (
     Boolean,
@@ -9,16 +9,14 @@ from sqlalchemy import (
     Text,
     DateTime,
     Date,
-    Table,
-    Enum,
+    Table
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .database import Base
 
-
-class Gender(enum.Enum):
+class Gender(str, Enum):
     남 = "남"
     여 = "여"
 
@@ -45,7 +43,7 @@ class User(Base):
     password = Column(String(100), nullable=False)
     nickname = Column(String(50))
     school_id = Column(String(10), ForeignKey("school.code"))
-    gender = Column(Enum(Gender))
+    gender = Column(String(10))
     birthday = Column(Date)
     last_login = Column(DateTime)
     joined_at = Column(DateTime, default=func.now())
@@ -111,7 +109,7 @@ class Student(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(10))
     number = Column(Integer)
-    gender = Column(Enum(Gender))
+    gender = Column(String(10))
     list_id = Column(Integer, ForeignKey("student_list.id", ondelete="CASCADE"))
 
     student_list = relationship("StudentList", back_populates="students")
