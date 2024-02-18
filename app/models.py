@@ -139,7 +139,7 @@ class Columns(Base):
 
 
 class Rows(Base):
-    __tablename__ = "row"
+    __tablename__ = "student_list_row"
 
     id = Column(Integer, primary_key=True)
     value = Column(String(100))

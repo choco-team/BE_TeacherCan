@@ -11,10 +11,9 @@ from app.routers.common_schemas import *
 
 router = APIRouter(prefix="/column", tags=["Column"])
 
-@router.get('/list/{studentListId}', response_model=ResponseModel[list[column]])
+@router.get('/list/{studentListId}', response_model=ResponseModel[list[ColumnWithId]])
 async def get_colomn_list(studentListId: int, db = Depends(get_verified_db)):
-    columns = get_columns(db, studentListId)
-    print("asdasdasdasd", type(columns[0]))
+    columns = read_column_list(db, studentListId)
     return ResponseWrapper(columns)
 
 
@@ -32,6 +31,12 @@ async def post_column(postColumn: PostColumnReq,  db = Depends(get_verified_db))
             student=student,
             column=column
         )
-
     return ResponseWrapper(PostColumnRes(column_id=column.id))
+
+@router.put('/', response_model=ResponseModel[PostColumnRes])
+async def post_column(column_update: ColumnWithId,  db = Depends(get_verified_db)):
+    update_column(
+        db = db,
+        column_update = column_update
+    )
 

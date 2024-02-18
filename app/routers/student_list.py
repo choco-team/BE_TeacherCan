@@ -50,7 +50,7 @@ def student_list(list_id: int, user: str = Depends(user)):
         for column in q.column_set.all()
     ]
     students = [
-        schemas.StudentWithColumn(
+        schemas.StudentWithRows(
             id=e.id,
             number=e.number,
             name=e.name,
