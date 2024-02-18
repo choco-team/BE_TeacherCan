@@ -9,12 +9,13 @@ from sqlalchemy import (
     Text,
     DateTime,
     Date,
-    Table
+    Table,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .database import Base
+
 
 class Gender(str, Enum):
     남 = "남"
@@ -139,7 +140,7 @@ class Columns(Base):
 
 
 class Rows(Base):
-    __tablename__ = "row"
+    __tablename__ = "student_list_row"
 
     id = Column(Integer, primary_key=True)
     value = Column(String(100))
