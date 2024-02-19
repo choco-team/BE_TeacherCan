@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, validator
 class BaseColumn (BaseModel):
     field: str
 
-class column (BaseColumn):
+class ColumnWithId (BaseColumn):
     id: int
 
 
@@ -14,6 +14,6 @@ class PostColumnRes(BaseModel):
     column_id: int
 
 class GetColumnRes(BaseModel):
-    columns: list[column]
+    columns: list[ColumnWithId]
 
     model_config = ConfigDict(from_attributes=True)

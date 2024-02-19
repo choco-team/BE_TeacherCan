@@ -39,7 +39,7 @@ get_asgi_application()
 models.Base.metadata.create_all(bind=engine)
 
 
-app = FastAPI(root_path="/api")
+app = FastAPI()
 
 
 # middleware
