@@ -52,7 +52,7 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
 
     school = relationship("School", back_populates="users")
-    student_list = relationship("StudentList", back_populates="user")
+    student_list = relationship("StudentList", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"User(email={self.email}, nickname={self.nickname}, school={self.school}, student_list={self.student_list})"
@@ -71,10 +71,10 @@ class StudentList(Base):
 
     user = relationship("User", back_populates="student_list")
     columns = relationship(
-        "Columns", back_populates="student_list", cascade="all, delete"
+        "Columns", back_populates="student_list", cascade="all, delete-orphan"
     )
     students = relationship(
-        "Student", back_populates="student_list", cascade="all, delete"
+        "Student", back_populates="student_list", cascade="all, delete-orphan"
     )
 
     def __repr__(self):
@@ -110,7 +110,7 @@ class Student(Base):
     name = Column(String(10))
     number = Column(Integer)
     gender = Column(String(10))
-    list_id = Column(Integer, ForeignKey("student_list.id", ondelete="CASCADE"))
+    list_id = Column(Integer, ForeignKey("student_list.id"))
 
     student_list = relationship("StudentList", back_populates="students")
     allergy = relationship(
@@ -118,7 +118,7 @@ class Student(Base):
         secondary=student_allergy_table,
         back_populates="students",
     )
-    rows = relationship("Rows", back_populates="student")
+    rows = relationship("Rows", back_populates="student", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"Student(id={self.id}, name={self.name}, number={self.number}, gender={self.gender}, allergy={[allergy.code for allergy in self.allergy]}"
@@ -129,10 +129,10 @@ class Columns(Base):
 
     id = Column(Integer, primary_key=True)
     field = Column(String(20))
-    student_list_id = Column(Integer, ForeignKey("student_list.id", ondelete="CASCADE"))
+    student_list_id = Column(Integer, ForeignKey("student_list.id"))
 
     student_list = relationship("StudentList", back_populates="columns")
-    rows = relationship("Rows", back_populates="column")
+    rows = relationship("Rows", back_populates="column", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"{self.id}"
@@ -145,9 +145,9 @@ class Rows(Base):
     value = Column(String(100))
 
     column_id = Column(
-        Integer, ForeignKey("student_list_column.id", ondelete="CASCADE")
+        Integer, ForeignKey("student_list_column.id")
     )
-    student_id = Column(Integer, ForeignKey("student.id", ondelete="CASCADE"))
+    student_id = Column(Integer, ForeignKey("student.id"))
 
     column = relationship("Columns", back_populates="rows")
     student = relationship("Student", back_populates="rows")

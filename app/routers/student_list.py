@@ -119,7 +119,6 @@ def student_list(
         )
         for s in student_list.students
     ]
-    print(type(student_list.students[0].gender))
     # db 트랜잭션
     with transaction.atomic():
         new_student_list.save()
@@ -127,7 +126,7 @@ def student_list(
             s.save()
 
     new_student_list.students = [
-        schemas.StudentWithColumn(
+        schemas.StudentWithRows(
             id=s.id,
             number=s.number,
             name=s.name,

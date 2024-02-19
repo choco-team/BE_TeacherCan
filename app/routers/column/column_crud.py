@@ -29,3 +29,9 @@ def update_column(db: Session, column_update: ColumnWithId):
     column.field = column_update.field
     db.commit()
     return column
+
+def delete_column(db: Session, column_id: int):
+    q= read_column_by_id(db = db, column_id = column_id)
+    print(q)
+    db.delete(q)
+    db.commit()
