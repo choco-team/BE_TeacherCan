@@ -265,3 +265,7 @@ class StudentListWithStudent(StudentList):
 
 class GetStudentList(BaseModel):
     StudentList: list[StudentList]
+
+class UpdateMain(BaseModel):
+    id: int
+    isMain: bool

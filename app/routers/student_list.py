@@ -155,6 +155,29 @@ def student_list(
     student_list.delete()
     return ResponseWrapper(data=None)
 
+@router.put(
+    "/list/main",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseModel[str],
+)
+def put_student_list_main(
+    update_main: schemas.UpdateMain,
+    user: str = Depends(user)
+):
+    try:
+        updated_student_list = StudentList.objects.get(id=update_main.id, user=user)
+        tmp = StudentList.objects.get(user=user, is_main=True)
+    except ObjectDoesNotExist:
+        raise ex.NotExistStudentList()  
+    
+    tmp.is_main = False
+    updated_student_list.is_main = update_main.isMain
+    tmp.save()
+    updated_student_list.save()
+
+    return ResponseWrapper("성공적으로 변경 되었습니다.")
+
+    
 
 @router.put(
     "/list",
