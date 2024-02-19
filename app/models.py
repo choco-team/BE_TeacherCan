@@ -9,12 +9,13 @@ from sqlalchemy import (
     Text,
     DateTime,
     Date,
-    Table
+    Table,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .database import Base
+
 
 class Gender(str, Enum):
     남 = "남"

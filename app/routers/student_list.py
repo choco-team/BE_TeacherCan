@@ -24,9 +24,7 @@ def student_list(user: User = Depends(user)):
     로그인만 하면 별도의 파라미터 없음
     """
     return ResponseWrapper(
-        schemas.GetStudentList(
-            StudentList=StudentList.objects.filter(user=user)
-        )
+        schemas.GetStudentList(StudentList=StudentList.objects.filter(user=user))
     )
 
 

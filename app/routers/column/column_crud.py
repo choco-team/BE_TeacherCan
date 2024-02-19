@@ -5,15 +5,15 @@ from sqlalchemy.orm import Session
 from app.models import *
 from app.routers.column.column_schema import *
 
-def create_column(db: Session, student_list: StudentList, field = str):
-    column = Columns(field = field, student_list = student_list)
+
+def create_column(db: Session, student_list: StudentList, field=str):
+    column = Columns(field=field, student_list=student_list)
     db.add(column)
     db.commit()
     return column
 
 def read_column_list(db: Session, studentListId: int):
     columns = db.query(Columns).filter(Columns.student_list_id == studentListId).all()
-    
     if not columns:
         raise HTTPException(status_code=404, detail="column이 존재하지 않아요.")    
     return columns
