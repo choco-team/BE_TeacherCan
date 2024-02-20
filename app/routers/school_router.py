@@ -1,33 +1,33 @@
-from typing import Annotated, Union
 from enum import Enum
 from datetime import date, timedelta, datetime
 
-from fastapi import Depends, Query, HTTPException, APIRouter, status
+from fastapi import Depends, Query, APIRouter
 from sqlalchemy.orm import Session
 import requests
+from app.crud import school_crud
 
-from .. import crud, schemas
-from ..schemas import ResponseModel, ResponseWrapper
-from ..common.consts import NICE_API_KEY, NICE_URL
-from ..dependencies import get_db, user_email
-from ..errors import exceptions as ex
+from app.schemas import school_schemas
+from app.crud import user_crud
+
+from app.routers.common_schemas import *
+from app.common.consts import NICE_API_KEY, NICE_URL
+from app.dependencies import get_db, user_email
+from app.errors import exceptions as ex
 
 
 router = APIRouter(prefix="/school", tags=["School"])
 
-
 base_params = {"Type": "json", "KEY": NICE_API_KEY}
 
-
 # 1. 학교정보 - 1. 학교 정보 검색
-@router.get("/list", status_code=200, response_model=ResponseModel[schemas.SchoolLists])
+@router.get("/list", status_code=200, response_model=ResponseModel[school_schemas.SchoolLists])
 async def school_list(
     school_name: str | None = Query(None, alias="schoolName"),
     page_number: int | None = Query(1, alias="pageNumber"),
     data_size: int | None = Query(10, alias="dataSize"),
 ):
     return ResponseWrapper(
-        crud.api_search_schools(
+        school_crud.api_search_schools(
             name=school_name, page_number=page_number, data_size=data_size
         )
     )
@@ -42,7 +42,7 @@ class MenuType(Enum):
 @router.get(
     "/lunch-menu",
     status_code=200,
-    response_model=ResponseModel[list[schemas.SchoolMeal]],
+    response_model=ResponseModel[list[school_schemas.SchoolMeal]],
 )
 async def get_menu(
     type: MenuType,
@@ -51,7 +51,7 @@ async def get_menu(
     token_email: str = Depends(user_email),
 ):
     # 유저 정보 불러오기 from token
-    db_user = crud.get_user(db, email=token_email)
+    db_user = user_crud.get_user(db, email=token_email)
     if not db_user.school:
         raise ex.NotRegistSchool()
 

@@ -55,13 +55,20 @@ app.add_middleware(
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
 # router
-from .routers import auth, user, school, student_list
-from .routers.column import column_router
-app.include_router(auth.router)
-app.include_router(user.router)
-app.include_router(school.router)
-app.include_router(student_list.router)
+from app.routers import auth_router
+from app.routers import user_router
+from app.routers import school_router
+from app.routers import column_router
+from app.routers import student_router
+from app.routers import studentList_router
+
+app.include_router(auth_router.router)
+app.include_router(user_router.router)
+app.include_router(school_router.router)
 app.include_router(column_router.router)
+app.include_router(student_router.router)
+app.include_router(studentList_router.router)
+
 
 
 

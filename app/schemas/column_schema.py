@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, validator
+from pydantic import BaseModel
 
 class BaseColumn (BaseModel):
     field: str
@@ -15,5 +15,3 @@ class PostColumnRes(BaseModel):
 
 class GetColumnRes(BaseModel):
     columns: list[ColumnWithId]
-
-    model_config = ConfigDict(from_attributes=True)

@@ -6,13 +6,16 @@ from fastapi import Depends, APIRouter, status
 from sqlalchemy.orm import Session
 
 from jwt import encode
+from app.crud import user_crud
+from app.dependencies import get_db
+from app.errors import exceptions as ex
+from app.common.consts import JWT_SECRET, JWT_ALGORITHM
 
-from .. import crud, schemas
-from ..schemas import ResponseModel, ResponseWrapper
-from ..dependencies import get_db
-from ..errors import exceptions as ex
+from app.schemas import auth_schemas
+from app.schemas import user_schemas
+from app.routers.common_schemas import *
 
-from ..common.consts import JWT_ALGORITHM, JWT_SECRET
+
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -22,13 +25,13 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post(
     "/signup/validation",
     status_code=status.HTTP_200_OK,
-    response_model=ResponseModel[schemas.Result],
+    response_model=ResponseModel[ResponseResult],
 )
-def is_email_usable(user: schemas.UserBase, db: Session = Depends(get_db)):
+def is_email_usable(user: user_schemas.UserBase, db: Session = Depends(get_db)):
     """
     `이메일 중복검사`
     """
-    db_user = crud.get_user(db, email=user.email, not_found_error=False)
+    db_user = user_crud.get_user(db, email=user.email, not_found_error=False)
     if db_user:
         raise ex.EmailAlreadyExist()
     return ResponseWrapper({"result": True, "message": "이 이메일은 사용할 수 있어요."})
@@ -38,23 +41,23 @@ def is_email_usable(user: schemas.UserBase, db: Session = Depends(get_db)):
 @router.post(
     "/signup",
     status_code=status.HTTP_201_CREATED,
-    response_model=ResponseModel[schemas.Result],
+    response_model=ResponseModel[ResponseResult],
 )
-def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def signup(user: user_schemas.UserCreate, db: Session = Depends(get_db)):
     """
     `회원가입`
     """
-    crud.create_user(db, user=user)
+    user_crud.create_user(db, user=user)
     return ResponseWrapper({"result": True, "message": "회원가입이 완료되었어요."})
 
 
 # 3.로그인
-@router.post("/signin", status_code=200, response_model=ResponseModel[schemas.Token])
-def signin(user: schemas.UserSignin, db: Session = Depends(get_db)):
+@router.post("/signin", status_code=200, response_model=ResponseModel[auth_schemas.Token])
+def signin(user: user_schemas.UserSignin, db: Session = Depends(get_db)):
     """
     `로그인`
     """
-    db_user = crud.get_user(db, email=user.email, not_found_error=True)
+    db_user = user_crud.get_user(db, email=user.email, not_found_error=True)
     if not check_password(user.password, db_user.password):
         raise ex.PasswordNotMatch()
 
