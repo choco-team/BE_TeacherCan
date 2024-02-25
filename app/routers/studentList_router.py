@@ -6,17 +6,18 @@ from django.core import serializers
 
 from teachercan.users.models import StudentList, Student, User, Column, Allergy, Row
 
-from .. import crud, schemas
-from ..schemas import ResponseModel, ResponseWrapper
-from ..dependencies import get_db, user_email, user
-from ..errors import exceptions as ex
+from app.routers.common_schemas import *
+from app.dependencies import get_db, user_email, user
+from app.errors import exceptions as ex
 
-router = APIRouter(prefix="/student", tags=["Student"])
+from app.schemas import studentList_schemas
+
+router = APIRouter(prefix="/student/list", tags=["StudentList"])
 
 
 # 명렬표
 @router.get(
-    "/list", status_code=200, response_model=ResponseModel[schemas.GetStudentList]
+    "/", status_code=200, response_model=ResponseModel[studentList_schemas.GetStudentList]
 )
 def student_list(user: User = Depends(user)):
     """
@@ -24,14 +25,14 @@ def student_list(user: User = Depends(user)):
     로그인만 하면 별도의 파라미터 없음
     """
     return ResponseWrapper(
-        schemas.GetStudentList(StudentList=StudentList.objects.filter(user=user))
+        studentList_schemas.GetStudentList(StudentList=StudentList.objects.filter(user=user))
     )
 
 
 @router.get(
-    "/list/{list_id}",
+    "/{list_id}",
     status_code=200,
-    response_model=ResponseModel[schemas.StudentListWithStudent],
+    response_model=ResponseModel[studentList_schemas.StudentListWithStudent],
 )
 def student_list(list_id: int, user: str = Depends(user)):
     """
@@ -44,11 +45,11 @@ def student_list(list_id: int, user: str = Depends(user)):
     except ObjectDoesNotExist:
         raise ex.NotExistStudentList()
     columns = [
-        schemas.Column(id=column.id, field=column.field)
+        studentList_schemas.Column(id=column.id, field=column.field)
         for column in q.column_set.all()
     ]
     students = [
-        schemas.StudentWithRows(
+        studentList_schemas.StudentWithRows(
             id=e.id,
             number=e.number,
             name=e.name,
@@ -59,7 +60,7 @@ def student_list(list_id: int, user: str = Depends(user)):
         for e in q.student_set.all()
     ]
     return ResponseWrapper(
-        schemas.StudentListWithStudent(
+        studentList_schemas.StudentListWithStudent(
             id=q.id,
             name=q.name,
             is_main=q.is_main,
@@ -73,12 +74,12 @@ def student_list(list_id: int, user: str = Depends(user)):
 
 
 @router.post(
-    "/list",
+    "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=ResponseModel[schemas.StudentListWithStudent],
+    response_model=ResponseModel[studentList_schemas.StudentListWithStudent],
 )
 def student_list(
-    student_list: schemas.StudentListCreate,
+    student_list: studentList_schemas.StudentListCreate,
     user: str = Depends(user),
 ):
     """
@@ -124,7 +125,7 @@ def student_list(
             s.save()
 
     new_student_list.students = [
-        schemas.StudentWithRows(
+        studentList_schemas.StudentWithRows(
             id=s.id,
             number=s.number,
             name=s.name,
@@ -139,7 +140,7 @@ def student_list(
     return ResponseWrapper(new_student_list)
 
 
-@router.delete("/list/{list_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{list_id}", status_code=status.HTTP_204_NO_CONTENT)
 def student_list(
     list_id: int,
     user: str = Depends(user),
@@ -157,17 +158,30 @@ def student_list(
 
 
 @router.put(
-    "/list/main",
+    "/main",
     status_code=status.HTTP_200_OK,
     response_model=ResponseModel[str],
 )
+<<<<<<< HEAD:app/routers/studentList_router.py
+def put_student_list_main(
+    update_main: studentList_schemas.UpdateMain,
+    user: str = Depends(user)
+):
+=======
 def put_student_list_main(update_main: schemas.UpdateMain, user: str = Depends(user)):
+>>>>>>> dev:app/routers/student_list.py
     try:
         updated_student_list = StudentList.objects.get(id=update_main.id, user=user)
         tmp = StudentList.objects.get(user=user, is_main=True)
     except ObjectDoesNotExist:
+<<<<<<< HEAD:app/routers/studentList_router.py
+        print("Asdajdnakd")
+        raise ex.NotExistStudentList()  
+    
+=======
         raise ex.NotExistStudentList()
 
+>>>>>>> dev:app/routers/student_list.py
     tmp.is_main = False
     updated_student_list.is_main = update_main.isMain
     tmp.save()
@@ -177,12 +191,12 @@ def put_student_list_main(update_main: schemas.UpdateMain, user: str = Depends(u
 
 
 @router.put(
-    "/list",
+    "/",
     status_code=status.HTTP_200_OK,
-    response_model=ResponseModel[schemas.StudentListWithStudent],
+    response_model=ResponseModel[studentList_schemas.StudentListWithStudent],
 )
 def student_list(
-    student_list: schemas.StudentListUpdate,
+    student_list: studentList_schemas.StudentListUpdate,
     user: str = Depends(user),
 ):
     try:
@@ -234,9 +248,9 @@ def student_list(
     for s in updated_student_list.student_set.all():
         res_rows = []
         for r in s.row_set.all():
-            res_row = schemas.Row(id=col.id, value=r.value)
+            res_row = studentList_schemas.Row(id=col.id, value=r.value)
             res_rows.append(res_row)
-        res_student = schemas.StudentWithRows(
+        res_student = studentList_schemas.StudentWithRows(
             id=s.id,
             number=s.number,
             name=s.name,
@@ -246,7 +260,7 @@ def student_list(
         )
         res_students.append(res_student)
 
-    res_student_list = schemas.StudentListWithStudent(
+    res_student_list = studentList_schemas.StudentListWithStudent(
         id=updated_student_list.id,
         name=updated_student_list.name,
         is_main=updated_student_list.is_main,
@@ -254,7 +268,7 @@ def student_list(
         created_at=updated_student_list.created_at,
         updated_at=updated_student_list.updated_at,
         columns=[
-            schemas.Column(id=e.id, field=e.field)
+            studentList_schemas.Column(id=e.id, field=e.field)
             for e in updated_student_list.column_set.all()
         ],
         students=res_students,
@@ -306,6 +320,9 @@ def student_list(
 #         ]
 #     }
 #     """
+<<<<<<< HEAD:app/routers/studentList_router.py
+#     return ResponseWrapper(crud.update_column(db, column, token_email))
+=======
 #     return ResponseWrapper(crud.update_column(db, column, token_email))
 
 
@@ -357,3 +374,4 @@ def student_list(
 #     token_email: str = Depends(user_email),
 # ):
 #     return ResponseWrapper(crud.delete_student(db, token_email, student_id))
+>>>>>>> dev:app/routers/student_list.py
