@@ -25,7 +25,7 @@ async def get_colomn_list_router(studentListId: int, db = Depends(get_verified_d
 async def post_column_router(postColumn: column_schema.PostColumnReq,  db = Depends(get_verified_db)):
     column = column_crud.create_column(
         db=db, 
-        student_list=studentList_crud.get_student_list(db, postColumn.studentListId),  
+        student_list=studentList_crud.get_student_list_asd(db, postColumn.studentListId),  
         field=postColumn.field
     )
     for student in student_crud.get_student(db, postColumn.studentListId):

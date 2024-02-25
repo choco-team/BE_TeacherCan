@@ -39,7 +39,7 @@ get_asgi_application()
 models.Base.metadata.create_all(bind=engine)
 
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 
 # middleware
@@ -59,14 +59,14 @@ from app.routers import auth_router
 from app.routers import user_router
 from app.routers import school_router
 from app.routers import column_router
-from app.routers import student_router
+# from app.routers import student_router
 from app.routers import studentList_router
 
 app.include_router(auth_router.router)
 app.include_router(user_router.router)
 app.include_router(school_router.router)
 app.include_router(column_router.router)
-app.include_router(student_router.router)
+# app.include_router(student_router.router)
 app.include_router(studentList_router.router)
 
 

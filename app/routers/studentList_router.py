@@ -169,6 +169,7 @@ def put_student_list_main(
         updated_student_list = StudentList.objects.get(id=update_main.id, user=user)
         tmp = StudentList.objects.get(user=user, is_main=True)
     except ObjectDoesNotExist:
+        print("Asdajdnakd")
         raise ex.NotExistStudentList()  
     
     tmp.is_main = False
