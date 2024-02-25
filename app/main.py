@@ -71,7 +71,6 @@ app.include_router(studentList_router.router)
 
 
 
-
 # 예외 처리
 @app.exception_handler(ex.APIException)
 async def exception_handelr(request, exc):
