@@ -155,21 +155,19 @@ def student_list(
     student_list.delete()
     return ResponseWrapper(data=None)
 
+
 @router.put(
     "/list/main",
     status_code=status.HTTP_200_OK,
     response_model=ResponseModel[str],
 )
-def put_student_list_main(
-    update_main: schemas.UpdateMain,
-    user: str = Depends(user)
-):
+def put_student_list_main(update_main: schemas.UpdateMain, user: str = Depends(user)):
     try:
         updated_student_list = StudentList.objects.get(id=update_main.id, user=user)
         tmp = StudentList.objects.get(user=user, is_main=True)
     except ObjectDoesNotExist:
-        raise ex.NotExistStudentList()  
-    
+        raise ex.NotExistStudentList()
+
     tmp.is_main = False
     updated_student_list.is_main = update_main.isMain
     tmp.save()
@@ -177,7 +175,6 @@ def put_student_list_main(
 
     return ResponseWrapper("성공적으로 변경 되었습니다.")
 
-    
 
 @router.put(
     "/list",
@@ -266,97 +263,97 @@ def student_list(
     return ResponseWrapper(res_student_list)
 
 
-@router.post(
-    "/columns",
-    status_code=status.HTTP_201_CREATED,
-    response_model=ResponseModel[schemas.StudentListWithStudent],
-)
-async def columns(
-    columns: schemas.ColumnCreate,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
-):
-    """
-    Request body 예시\n
-    {\n
-    \t"field": "전화번호",\n
-    \t"student_list_id": 9,\n
-    \t"student_id": [1, 2, 3]\n
-    }
-    """
-    return ResponseWrapper(crud.create_column(db, token_email, columns))
+# @router.post(
+#     "/columns",
+#     status_code=status.HTTP_201_CREATED,
+#     response_model=ResponseModel[schemas.StudentListWithStudent],
+# )
+# async def columns(
+#     columns: schemas.ColumnCreate,
+#     db: Session = Depends(get_db),
+#     token_email: str = Depends(user_email),
+# ):
+#     """
+#     Request body 예시\n
+#     {\n
+#     \t"field": "전화번호",\n
+#     \t"student_list_id": 9,\n
+#     \t"student_id": [1, 2, 3]\n
+#     }
+#     """
+#     return ResponseWrapper(crud.create_column(db, token_email, columns))
 
 
-@router.put(
-    "/columns",
-    status_code=status.HTTP_200_OK,
-    response_model=ResponseModel[schemas.StudentListWithStudent],
-)
-async def columns(
-    column: schemas.ColumnUpdate,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
-):
-    """
-    {\n
-        "field": "전화번호", // 명렬표에 존재하는 필드네임
-        "studentListId": 54, // 명렬표 id
-        "studentId": [
-            53, 54, 55 // 명렬표에 포함된 학생 id
-        ],
-        "value": [
-            "112", "114", "119" // 학생 순서대로 필드값
-        ]
-    }
-    """
-    return ResponseWrapper(crud.update_column(db, column, token_email))
+# @router.put(
+#     "/columns",
+#     status_code=status.HTTP_200_OK,
+#     response_model=ResponseModel[schemas.StudentListWithStudent],
+# )
+# async def columns(
+#     column: schemas.ColumnUpdate,
+#     db: Session = Depends(get_db),
+#     token_email: str = Depends(user_email),
+# ):
+#     """
+#     {\n
+#         "field": "전화번호", // 명렬표에 존재하는 필드네임
+#         "studentListId": 54, // 명렬표 id
+#         "studentId": [
+#             53, 54, 55 // 명렬표에 포함된 학생 id
+#         ],
+#         "value": [
+#             "112", "114", "119" // 학생 순서대로 필드값
+#         ]
+#     }
+#     """
+#     return ResponseWrapper(crud.update_column(db, column, token_email))
 
 
-@router.get(
-    "/{student_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=ResponseModel[schemas.Student],
-)
-async def student(
-    student_id: int,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
-):
-    return ResponseWrapper(crud.get_student(db, token_email, student_id))
+# @router.get(
+#     "/{student_id}",
+#     status_code=status.HTTP_200_OK,
+#     response_model=ResponseModel[schemas.Student],
+# )
+# async def student(
+#     student_id: int,
+#     db: Session = Depends(get_db),
+#     token_email: str = Depends(user_email),
+# ):
+#     return ResponseWrapper(crud.get_student(db, token_email, student_id))
 
 
-@router.post(
-    "/",
-    status_code=status.HTTP_201_CREATED,
-    response_model=ResponseModel[schemas.Student],
-)
-async def student(
-    list_id: int = Query(..., alias="listId"),
-    student: schemas.StudentCreate = Body(...),
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
-):
-    return ResponseWrapper(crud.create_student(db, token_email, list_id, student))
+# @router.post(
+#     "/",
+#     status_code=status.HTTP_201_CREATED,
+#     response_model=ResponseModel[schemas.Student],
+# )
+# async def student(
+#     list_id: int = Query(..., alias="listId"),
+#     student: schemas.StudentCreate = Body(...),
+#     db: Session = Depends(get_db),
+#     token_email: str = Depends(user_email),
+# ):
+#     return ResponseWrapper(crud.create_student(db, token_email, list_id, student))
 
 
-@router.put(
-    "/{student_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=ResponseModel[schemas.Student],
-)
-async def student(
-    student_id: int,
-    student: schemas.StudentUpdate,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
-):
-    return ResponseWrapper(crud.update_student(db, token_email, student_id, student))
+# @router.put(
+#     "/{student_id}",
+#     status_code=status.HTTP_200_OK,
+#     response_model=ResponseModel[schemas.Student],
+# )
+# async def student(
+#     student_id: int,
+#     student: schemas.StudentUpdate,
+#     db: Session = Depends(get_db),
+#     token_email: str = Depends(user_email),
+# ):
+#     return ResponseWrapper(crud.update_student(db, token_email, student_id, student))
 
 
-@router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def student(
-    student_id: int,
-    db: Session = Depends(get_db),
-    token_email: str = Depends(user_email),
-):
-    return ResponseWrapper(crud.delete_student(db, token_email, student_id))
+# @router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
+# async def student(
+#     student_id: int,
+#     db: Session = Depends(get_db),
+#     token_email: str = Depends(user_email),
+# ):
+#     return ResponseWrapper(crud.delete_student(db, token_email, student_id))
