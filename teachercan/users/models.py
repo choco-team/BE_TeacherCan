@@ -9,6 +9,7 @@ from django.contrib.auth.validators import (
     ASCIIUsernameValidator,
     UnicodeUsernameValidator,
 )
+from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.mail import send_mail
@@ -31,6 +32,10 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError("email를 입력해주세요.")
         user = self.model(email=email, **extra_fields)
+        try:
+            validate_password(password)
+        except:
+            raise ValueError("비밀번호 유효성 검사 실패")
         user.set_password(password)
         user.save(using=self.db)
         return user

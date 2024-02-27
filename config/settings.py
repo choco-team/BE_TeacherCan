@@ -48,6 +48,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = []
 
 LOCAL_APPS = [
+    "teachercan.auths",
     "teachercan.users",
 ]
 
@@ -149,3 +150,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # User
 # ------------------------------------------------------------------------------
 AUTH_USER_MODEL = "users.User"
+
+
+# jwt
+JWT_SECRET = env("JWT_SECRET")
+JWT_ALGORITHM = env("JWT_ALGORITHM")
+
+# nice api
+NICE_URL = "https://open.neis.go.kr/hub"
+NICE_API_KEY = env("NICE_API_KEY")
