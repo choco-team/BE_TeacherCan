@@ -1,7 +1,6 @@
 from datetime import date, datetime
 from enum import Enum
-from ninja import Schema
-from pydantic import Field
+from ninja import Schema, Field
 
 
 class Gender(str, Enum):
@@ -11,11 +10,11 @@ class Gender(str, Enum):
 
 class InfoOut(Schema):
     email: str
-    social_id: str | None = Field(None, serialization_alias="socialId")
+    socialId: str | None = Field(None, alias="social_id")
     nickname: str | None = Field(None)
     gender: Gender | None = Field(None)
     birthday: date | None = Field(None)
-    last_login: datetime | None = Field(None, serialization_alias="lastLogin")
-    joined_at: datetime = Field(serialization_alias="joinedAt")
-    avatar_sgv: str | None = Field(None, serialization_alias="avatarSgv")
+    lastLogin: datetime | None = Field(None, alias="last_login")
+    joinedAt: datetime = Field(alias="joined_at")
+    avatarSgv: str | None = Field(None, alias="avatar_sgv")
     # school: Optional["school_schemas.School"] = Field(None)
