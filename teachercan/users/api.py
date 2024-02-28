@@ -4,7 +4,7 @@ from ..auths.api import AuthBearer
 from .models import User
 from .schemas import InfoOut
 
-router = Router(auth=AuthBearer())
+router = Router(auth=AuthBearer(), tags=["User"])
 
 
 # 1.개인 정보 조회

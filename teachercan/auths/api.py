@@ -21,7 +21,7 @@ class AuthBearer(HttpBearer):
         return user
 
 
-router = Router()
+router = Router(tags=["Auth"])
 
 
 # 1.이메일 중복검사
@@ -67,5 +67,3 @@ def signin(request, user: SignInIn):
         return token
 
     return "로그인 실패"
-
-    return ResponseWrapper({"result": True, "message": "Success Login", "token": token})
