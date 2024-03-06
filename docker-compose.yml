@@ -5,28 +5,12 @@ networks:
     driver: bridge
 
 services:
-
   app:
     container_name: app
     build:
       context: .
       dockerfile: Dockerfile
     image: teachercan
-    env_file:
-      - .env
-    volumes:
-      - ./db.sqlite3:/app/db.sqlite3
-      - ./app:/app/app
-    command: uvicorn app.main:app --host 0.0.0.0 --reload
-    networks:
-      - nginx-network
-
-  admin:
-    container_name: admin
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: teachercan-admin
     env_file:
       - .env
     volumes:
@@ -44,7 +28,6 @@ services:
       - "80:80"
     depends_on:
       - app
-      - admin
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       # - static:/code/static
