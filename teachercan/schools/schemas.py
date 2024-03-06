@@ -3,7 +3,8 @@ from enum import Enum
 from ninja import Schema, Field
 
 
-# class DayOrWeek(Enum):
+# class DayOrWeek(str, Enum):
+#     day: "day"
 
 
 class SchoolIn(Schema):
