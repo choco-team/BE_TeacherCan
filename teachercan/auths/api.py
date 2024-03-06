@@ -30,10 +30,10 @@ def is_email_usable(request, email: EmailIn):
     """
     `이메일 중복검사`
     """
-    user_count = User.objects.filter(email=email).count()
+    user_count = User.objects.filter(email=email.email).count()
     if user_count:
-        return {"result": False, "message": "사용 불가능"}
-    return {"result": True, "message": "이 이메일은 사용할 수 있어요."}
+        return {"message": "사용 불가능"}
+    return {"message": "이 이메일은 사용할 수 있어요."}
 
 
 # 2.회원가입
