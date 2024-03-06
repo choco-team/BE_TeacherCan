@@ -9,6 +9,8 @@ from config.settings import JWT_ALGORITHM, JWT_SECRET
 from teachercan.users.models import User
 from .schemas import EmailIn, SignUpIn, SignInIn
 
+from config.exceptions import ServiceUnavailableError
+
 
 class AuthBearer(HttpBearer):
     def authenticate(self, request, token):
@@ -17,7 +19,7 @@ class AuthBearer(HttpBearer):
             user = User.objects.get(email=payload["email"])
             login(request, user)
         except:
-            raise ValueError("토큰 인증 실패")
+            raise ServiceUnavailableError("토큰 인증 실패")
         return user
 
 
