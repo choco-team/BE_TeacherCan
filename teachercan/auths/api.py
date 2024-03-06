@@ -64,6 +64,6 @@ def signin(request, user: SignInIn):
             JWT_SECRET,
             JWT_ALGORITHM,
         )
-        return token
+        return {"token": token}
 
     return "로그인 실패"
