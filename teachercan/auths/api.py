@@ -4,6 +4,7 @@ from ninja import Router
 from ninja.security import HttpBearer
 from django.contrib.auth import authenticate, login
 from jwt import encode, decode
+from config.exceptions import ServiceUnavailableError
 
 from config.settings import JWT_ALGORITHM, JWT_SECRET
 from teachercan.users.models import User
@@ -32,7 +33,7 @@ def is_email_usable(request, email: EmailIn):
     """
     user_count = User.objects.filter(email=email.email).count()
     if user_count:
-        return {"message": "사용 불가능"}
+        raise ServiceUnavailableError()
     return {"result": True, "message": "이 이메일은 사용할 수 있어요."}
 
 
