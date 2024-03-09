@@ -28,8 +28,8 @@ class Error:
         1103, "비밀번호는 8자 보다 적거나, 너무 일반적인 단어는 안 돼요.", status.HTTP_422_UNPROCESSABLE_ENTITY
     )
     not_found_user = ErrorDetail(1104, "이메일을 다시 확인해주세요.", status.HTTP_404_NOT_FOUND)
-    password_not_match = ErrorDetail(
-        1105, "비밀번호를 다시 확인해주세요.", status.HTTP_401_UNAUTHORIZED
+    signin_not_match = ErrorDetail(
+        1105, "로그인 정보가 일치하지 않습니다.", status.HTTP_401_UNAUTHORIZED
     )
 
     # School
@@ -204,12 +204,12 @@ class NotFoundUser(APIException):
         )
 
 
-class PasswordNotMatch(APIException):
+class SigninNotMatch(APIException):
     def __init__(self, ex: Exception = None):
         super().__init__(
-            status_code=Error.password_not_match.status_code,
-            code=Error.password_not_match.code,
-            message=Error.password_not_match.message,
+            status_code=Error.signin_not_match.status_code,
+            code=Error.signin_not_match.code,
+            message=Error.signin_not_match.message,
             ex=ex,
         )
 

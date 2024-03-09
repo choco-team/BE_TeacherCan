@@ -17,6 +17,7 @@ class Row(BaseModel):
 class StudentList(BaseModel):
     id: int = Field(...)
     name: str = Field(...)
+    description: str | None
     is_main: bool = Field(..., serialization_alias="isMain")
     has_allergy: bool = Field(False, serialization_alias="hasAllergy")
     created_at: datetime = Field(..., serialization_alias="createdAt")
@@ -25,7 +26,7 @@ class StudentList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class GetStudentList(BaseModel):
-    StudentList: list[StudentList]
+    studentList: list[StudentList]
 
 class StudentWithRows(student_schemas.Student):
     id: int = Field(...)
@@ -39,27 +40,23 @@ class StudentListWithStudent(StudentList):
 
     model_config = ConfigDict(from_attributes=True)
 
-class StudentListWithStudent(StudentList):
-    columns: list[Column]
-    students: list[StudentWithRows]
-
-    model_config = ConfigDict(from_attributes=True)
-
 class StudentListCreate(BaseModel):
-    name: str = Field(...)
-    has_allergy: bool = Field(False, alias="allergyYn")
+    name: str
+    description: str
+    # has_allergy: bool = Field(False, alias="allergyYn")
     students: list[student_schemas.StudentCreate]
 
 class UpdateMain(BaseModel):
     id: int
-    isMain: bool
+    is_main: bool | None = Field(True, alias="isMain")
 
 class StudentListUpdate(BaseModel):
-    id: int = Field(...)
-    name: str = Field(...)
+    id: int
+    name: str
+    description: str
     is_main: bool | None = Field(False, alias="isMain")
-    has_allergy: bool = Field(False, alias="hasAllergy")
-    columns: list[Column] = Field(...)
+    # has_allergy: bool = Field(False, alias="hasAllergy")
+    columns: list[Column]
     students: list[student_schemas.StudentUpdate]
 
 # class ColumnUpdate(ColumnCreate):

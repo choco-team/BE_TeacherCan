@@ -7,22 +7,22 @@ class Row(BaseModel):
     value: str | None = Field(None)
 
 class Student(BaseModel):
-    number: int = Field(..., serialization_alias="StudentNumber")
-    name: str = Field(..., serialization_alias="StudentName")
+    number: int = Field(..., serialization_alias="studentNumber")
+    name: str = Field(..., serialization_alias="studentName")
     gender: Gender = Field(...)
     allergy: list[int] | None = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
 
 class StudentCreate(BaseModel):
-    number: int = Field(..., alias="StudentNumber")
-    name: str = Field(..., alias="StudentName")
+    number: int = Field(..., alias="studentNumber")
+    name: str = Field(..., alias="studentName")
     gender: Gender = Field(...)
 
 class StudentUpdate(BaseModel):
     id: int = Field(...)
-    number: int = Field(..., alias="StudentNumber")
-    name: str = Field(..., alias="StudentName")
+    number: int = Field(..., alias="studentNumber")
+    name: str = Field(..., alias="studentName")
     gender: Gender = Field(...)
     allergy: list[int] | None = Field(None)
     rows: list[Row] = Field([])

@@ -57,9 +57,9 @@ def signin(user: user_schemas.UserSignin, db: Session = Depends(get_db)):
     """
     `로그인`
     """
-    db_user = user_crud.get_user(db, email=user.email, not_found_error=True)
+    db_user = user_crud.get_user_signin(db, email=user.email, not_found_error=True)
     if not check_password(user.password, db_user.password):
-        raise ex.PasswordNotMatch()
+        raise ex.SigninNotMatch()
 
     # Edit last_login
     setattr(db_user, "last_login", datetime.utcnow())
