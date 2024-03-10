@@ -1,6 +1,9 @@
+from typing import Optional
 from datetime import date, datetime
 from enum import Enum
 from ninja import Schema, Field
+
+from ..schools.schemas import SchoolOut
 
 
 class Gender(str, Enum):
@@ -9,12 +12,12 @@ class Gender(str, Enum):
 
 
 class InfoIn(Schema):
-    socialId: str | None = Field(None, alias="social_id")
+    social_id: str | None = Field(None, alias="socialId")
     nickname: str | None = Field(None)
     gender: Gender | None = Field(None)
     birthday: date | None = Field(None)
-    avatarSgv: str | None = Field(None, alias="avatar_sgv")
-    schoolCode: str | None = Field(None, alias="school_code")
+    avatar_sgv: str | None = Field(None, alias="avatarSgv")
+    school_code: str | None = Field(None, alias="schoolCode")
 
 
 class InfoOut(Schema):
@@ -26,4 +29,4 @@ class InfoOut(Schema):
     lastLogin: datetime | None = Field(None, alias="last_login")
     joinedAt: datetime = Field(alias="joined_at")
     avatarSgv: str | None = Field(None, alias="avatar_sgv")
-    # school: Optional["school_schemas.School"] = Field(None)
+    school: Optional[SchoolOut] = Field(None)
