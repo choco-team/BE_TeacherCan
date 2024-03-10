@@ -69,6 +69,7 @@ class StudentList(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     has_allergy = Column(Boolean, default=False)
+    description = Column(String(200), default="")
 
     user = relationship("User", back_populates="student_list")
     columns = relationship(

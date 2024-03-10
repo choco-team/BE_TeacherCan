@@ -24,8 +24,9 @@ def student_list(user: User = Depends(user)):
     모든 명렬표 보기(학생은 안보임)\n
     로그인만 하면 별도의 파라미터 없음
     """
+    studentList=StudentList.objects.filter(user=user).order_by("-is_main","-updated_at")
     return ResponseWrapper(
-        studentList_schemas.GetStudentList(StudentList=StudentList.objects.filter(user=user))
+        studentList_schemas.GetStudentList(studentList=studentList)
     )
 
 
@@ -63,6 +64,7 @@ def student_list(list_id: int, user: str = Depends(user)):
         studentList_schemas.StudentListWithStudent(
             id=q.id,
             name=q.name,
+            description=q.description,
             is_main=q.is_main,
             has_allergy=q.has_allergy,
             created_at=q.created_at,
@@ -85,21 +87,19 @@ def student_list(
     """
     {\n
         "name": "3-2반 명렬표", // 명렬표 이름
-        "isMain": false, // 메인 명렬표 여부
         "description": "우리반 명렬표", // 명렬표 설명
-        "hasAllergy": false, // 알러지 정보 사용 여부
         "students": [ // 학생 정보 입력
             {
-                "number": 1, // 번호
-                "name": "김개똥", // 학생 이름
-                "isMale": true, // 성별(true: 남자, false: 여자)
+                "studentNumber": 1, // 번호
+                "studentName": "김개똥", // 학생 이름
+                "gender": "남" // "남","여"
                 "description": "맨 앞자리", // 학생 설명
                 "allergy": [] // 알러지 정보, 없으면 빈 배열
             },
             {
                 "number": 2, // 번호
                 "name": "나승범", // 학생 이름
-                "isMale": false, // 성별(true: 남자, false: 여자)
+                "gender": "남" // "남","여"
                 "description": "급식 1번", // 학생 설명
                 "allergy": [1, 2, 3] // 알러지 정보, 없으면 빈 배열
             },
@@ -108,7 +108,8 @@ def student_list(
     """
     new_student_list = StudentList(
         name=student_list.name,
-        has_allergy=student_list.has_allergy,
+        description=student_list.description,
+        has_allergy=False,
         is_main=not user.studentlist_set.count(),
         user=user,
     )
@@ -130,7 +131,7 @@ def student_list(
             number=s.number,
             name=s.name,
             gender=s.gender,
-            allergy=[] if student_list.has_allergy else None,
+            allergy= None,
             rows=[],
         )
         for s in students
@@ -168,13 +169,29 @@ def put_student_list_main(
 ):
     try:
         updated_student_list = StudentList.objects.get(id=update_main.id, user=user)
-        tmp = StudentList.objects.get(user=user, is_main=True)
     except ObjectDoesNotExist:
         raise ex.NotExistStudentList()  
-    tmp.is_main = False
-    updated_student_list.is_main = update_main.isMain
-    tmp.save()
-    updated_student_list.save()
+    
+    # is_main == false 를 true로 바꿀 때 
+    if not updated_student_list.is_main and update_main.is_main:
+        try:
+            tmp = StudentList.objects.get(user=user, is_main=True)
+        except ObjectDoesNotExist:
+            raise ex.NotExistStudentList()
+        tmp.is_main = False
+        tmp.save()
+        updated_student_list.is_main = update_main.is_main
+        updated_student_list.save()
+    # is_main == true 를 false로 바꿀 때 
+    elif updated_student_list.is_main and not update_main.is_main:
+        try:
+            tmp = StudentList.objects.filter(user=user, is_main=False).order_by('-updated_at')[0]
+        except ObjectDoesNotExist:
+            raise ex.NotExistStudentList()
+        tmp.is_main = True
+        tmp.save()
+        updated_student_list.is_main = update_main.is_main
+        updated_student_list.save()
 
     return ResponseWrapper("성공적으로 변경 되었습니다.")
 
@@ -195,12 +212,27 @@ def student_list(
 
     with transaction.atomic():
         updated_student_list.name = student_list.name
-        if student_list.is_main:
-            tmp = StudentList.objects.get(user=user, is_main=True)
+        updated_student_list.description = student_list.description
+        # is_main == false 를 true로 바꿀 때 
+        if not updated_student_list.is_main and student_list.is_main:
+            try:
+                tmp = StudentList.objects.get(user=user, is_main=True)
+            except ObjectDoesNotExist:
+                raise ex.NotExistStudentList()
             tmp.is_main = False
             tmp.save()
-        updated_student_list.is_main = student_list.is_main
-        updated_student_list.has_allergy = student_list.has_allergy
+            updated_student_list.is_main = student_list.is_main
+        # is_main == true 를 false 바꿀 때 
+        elif updated_student_list.is_main and not student_list.is_main:
+            try:
+                tmp = StudentList.objects.filter(user=user, is_main=False).order_by('-updated_at')[0]
+            except ObjectDoesNotExist:
+                raise ex.NotExistStudentList()
+            tmp.is_main = True
+            tmp.save()
+            updated_student_list.is_main = student_list.is_main
+
+        # updated_student_list.has_allergy = student_list.has_allergy
         updated_student_list.save()
         for column in student_list.columns:
             try:
@@ -252,6 +284,7 @@ def student_list(
     res_student_list = studentList_schemas.StudentListWithStudent(
         id=updated_student_list.id,
         name=updated_student_list.name,
+        description=updated_student_list.description,
         is_main=updated_student_list.is_main,
         has_allergy=updated_student_list.has_allergy,
         created_at=updated_student_list.created_at,

@@ -19,6 +19,14 @@ def get_user(
         raise ex.NotFoundUser()
     return user
 
+def get_user_signin(
+    db: Session, email: str = None, not_found_error: bool = True
+) -> models.User | None:
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not_found_error and not user:
+        raise ex.SigninNotMatch()
+    return user
+
 
 def create_user(db: Session, user: user_schemas.UserCreate):
     if get_user(db, email=user.email, not_found_error=False):
