@@ -91,33 +91,31 @@ class Error:
 #         },
 #     )
 
-async def response_exception_handelr(request, exc, api):
-    data = {
-        "path": request.url.path,
-        "method": request.method,
-        "path_params": request.path_params or None,
-        "query_params": str(request.query_params) or None,
-        "body": exc.body if hasattr(exc, "body") else None,
-    }
-    print("💣 서버 에러 발생!!!!\n", data)
-    return api.create_response(
-        status_code=Error.server_error.status_code,
-        content={
-            "success": False,
-            "code": Error.server_error.code,
-            "message": Error.server_error.message,
-            "data": data,
-        },
-    )
+# def response_exception_handelr(request, exc, api):
+#     data = {
+#         # "path": request.url.path,
+#         "method": request.method,
+#         # "path_params": request.path_params or None,
+#         # "query_params": str(request.query_params) or None,
+#         "body": exc.body if hasattr(exc, "body") else None,
+#     }
+#     print("💣 서버 에러 발생!!!!\n", data)
+#     return api.create_response(
+#         request,
+#         {            
+#             "code": Error.server_error.code,
+#             "message": Error.server_error.message,
+#             "data": data,
+#         },
+#         status=exc.status_code,
+#     )
 
 def api_exception_handelr(request, exc: "APIException", api):
     return api.create_response(
         request,
         {  
-            "success": exc.success,
             "code": exc.code,
             "message": exc.message,
-            "data": exc.data,
         },
         status=exc.status_code,
     )
@@ -127,7 +125,6 @@ class APIException(Exception):
     status_code: int
     code: int
     message: str
-    data: dict
     ex: Exception
 
     def __init__(
@@ -135,12 +132,11 @@ class APIException(Exception):
         *,
         errorDetail: Error.ErrorDetail,
         ex: Exception = None,
-    ):
+    ):  
         self.success = False
         self.status_code = errorDetail.status_code
         self.code = errorDetail.code
         self.message = errorDetail.message
-        self.data = None
         self.ex = ex
         super().__init__(ex)
 

@@ -24,6 +24,13 @@ class AuthBearer(HttpBearer):
 
 router = Router(tags=["Auth"])
 
+from ninja import Schema
+from pydantic import EmailStr
+
+class Asd(Schema):
+    email: EmailStr
+    social_id:str
+
 
 # 1.이메일 중복검사
 @router.post("/signup/validation")
@@ -34,7 +41,8 @@ def is_email_usable(request, email: EmailIn):
     user_count = User.objects.filter(email=email.email).count()
     if user_count:
         raise ex.EmailAlreadyExist()
-    return {"result": True, "message": "이 이메일은 사용할 수 있어요."}
+    return "이 이메일은 사용할 수 있어요."
+
 
 
 # 2.회원가입
