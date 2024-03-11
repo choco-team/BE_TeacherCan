@@ -1,18 +1,14 @@
 from ninja import NinjaAPI
-from config.exceptions import ServiceUnavailableError
-
 from teachercan.auths.api import router as auth_router
 from teachercan.users.api import router as user_router
 
+from config import exceptions as ex
+
 api = NinjaAPI()
 
-@api.exception_handler(ServiceUnavailableError)
-def service_unavailable(request, exc):
-    return api.create_response(
-        request,
-        {"message": "Please retry later"},
-        status=503,
-    )
+@api.exception_handler(ex.APIException)
+def exception_handelr(request, exc):
+    return ex.api_exception_handelr(request, exc, api)
 
 
 api.add_router("/auth/", auth_router, tags=["auth"])
