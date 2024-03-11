@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-Django
-SQLAlchemy
-django-environ
-PyJWT
-pydantic[email]
-requests
-pymysql

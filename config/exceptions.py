@@ -1,2 +1,1 @@
-class ServiceUnavailableError(Exception):
-    pass
+class ServiceUnavailableError(Exception): ...

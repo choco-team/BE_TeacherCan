@@ -6,9 +6,9 @@ from teachercan.schools.api import router as school_router
 from teachercan.students.api import router as student_router
 
 from .exceptions import ServiceUnavailableError
+from .renderers import DefaultRenderer
 
-
-api = NinjaAPI()
+api = NinjaAPI(renderer=DefaultRenderer())
 
 api.add_router("/auth/", auth_router)
 api.add_router("/user/", user_router)
@@ -20,6 +20,6 @@ api.add_router("/student/", student_router)
 def service_unavailable(request, exc):
     return api.create_response(
         request,
-        {"message": "Please retry later"},
+        {"message": exc.__str__()},
         status=503,
     )

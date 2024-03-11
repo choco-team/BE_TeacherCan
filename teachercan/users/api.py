@@ -27,5 +27,4 @@ def put_user(request, payload: InfoIn):
         school = create_school(payload.school_code)
     user.school = school
     user.save()
-    print(user.school.address)
     return user
