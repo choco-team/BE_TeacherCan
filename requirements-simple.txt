@@ -7,4 +7,3 @@ PyJWT
 pydantic[email]
 requests
 pymysql
-djangorestframework

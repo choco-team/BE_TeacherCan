@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 
-from ninja import Router
+from ninja import Router, Schema
 from ninja.security import HttpBearer
 from django.contrib.auth import authenticate, login
 from jwt import encode, decode
+from pydantic import EmailStr
 from config import exceptions as ex
 
 from config.settings import JWT_ALGORITHM, JWT_SECRET
@@ -24,25 +25,34 @@ class AuthBearer(HttpBearer):
 
 router = Router(tags=["Auth"])
 
-from ninja import Schema
-from pydantic import EmailStr
 
-class Asd(Schema):
+class UserOut (Schema):
     email: EmailStr
     social_id: str
 
+
+class UserIn (Schema):
+    id: int
+
+
+@router.get("/test/{id}", response=UserOut)
+def asd(request, id: int):
+    user = User.objects.get(id=id)
+    raise ValueError("test")
+    return user
+
 # 1.이메일 중복검사
+
+
 @router.post("/signup/validation")
 def is_email_usable(request, email: EmailIn):
     """
     `이메일 중복검사`
     """
     user_count = User.objects.filter(email=email.email).count()
-    user = User.objects.get(id=1)
     if user_count:
         raise ex.EmailAlreadyExist()
-    return "사용 가능한 아이디입니다."
-
+    return "사용 가능한 이메일입니다."
 
 
 # 2.회원가입
@@ -54,7 +64,7 @@ def signup(request, user: SignUpIn):
     User.objects.create_user(
         email=user.email, password=user.password, nickname=user.nickname
     )
-    return {"result": True, "message": "회원가입이 완료되었어요."}
+    return "회원가입이 완료되었어요."
 
 
 # 3.로그인

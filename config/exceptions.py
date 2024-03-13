@@ -1,5 +1,6 @@
 from rest_framework import status
 
+
 class Error:
     class ErrorDetail:
         def __init__(
@@ -16,15 +17,19 @@ class Error:
 
     # 공통
     server_error = default
-    not_authenticated = ErrorDetail(1001, "로그인이 필요한 서비스예요.", status.HTTP_403_FORBIDDEN)
-    invalid_token = ErrorDetail(1002, "유효하지 않은 토큰이에요.", status.HTTP_403_FORBIDDEN)
+    not_authenticated = ErrorDetail(
+        1001, "로그인이 필요한 서비스예요.", status.HTTP_403_FORBIDDEN)
+    invalid_token = ErrorDetail(
+        1002, "유효하지 않은 토큰이에요.", status.HTTP_403_FORBIDDEN)
 
     # Auth
-    email_already_exist = ErrorDetail(1102, "이메일이 이미 존재해요.", status.HTTP_409_CONFLICT)
+    email_already_exist = ErrorDetail(
+        1102, "이메일이 이미 존재해요.", status.HTTP_409_CONFLICT)
     password_invalid = ErrorDetail(
         1103, "비밀번호는 8자 보다 적거나, 너무 일반적인 단어는 안 돼요.", status.HTTP_422_UNPROCESSABLE_ENTITY
     )
-    not_found_user = ErrorDetail(1104, "이메일을 다시 확인해주세요.", status.HTTP_404_NOT_FOUND)
+    not_found_user = ErrorDetail(
+        1104, "이메일을 다시 확인해주세요.", status.HTTP_404_NOT_FOUND)
     password_not_match = ErrorDetail(
         1105, "비밀번호를 다시 확인해주세요.", status.HTTP_401_UNAUTHORIZED
     )
@@ -54,7 +59,7 @@ class Error:
         1403, "해당하는 학생이 존재하지 않아요.", status.HTTP_404_NOT_FOUND
     )
 
-    #Column
+    # Column
     not_found_column = ErrorDetail(
         1501, "요청하신 column이 존재하지 않아요.", status.HTTP_404_NOT_FOUND
     )
@@ -67,36 +72,38 @@ class Error:
         "/api/auth/signup/validation": ErrorDetail(1101, "이메일이 형식이 올바르지 않아요."),
     }
 
-def response_exception_handelr(request, exc, api):
+
+def exception_handelr(request, exc, api):
     data = {
-        "path": request.path,
-        "method": request.method,
-    #     "path_params": request.path_params or None,
-    #     "query_params": str(request.content_params) or None,
-    #     "body": exc.body if hasattr(exc, "body") else None,
+        "detail": f"{exc.args[0]} {str(exc.__context__)}" or None,
+        "path": request.path or None,
+        "method": request.method or None,
+        "path_params": request.resolver_match.kwargs or None,
+        "query_params": request.environ['QUERY_STRING'] or None,
+        "body": request.body.decode() or None,
     }
     print("💣 서버 에러 발생!!!!\n", data)
-    print("@@@@@@@@@", dir(exc), "\n", exc.args)
-
     return api.create_response(
         request,
-        {  
-            "code": 123,
-            "message": "response_exception_handelr",
+        {
+            "code": 1000,
+            "message": "서버에서 에러가 발생했어요.",
+            "data": data
         },
-        status=503,
+        status=500,
     )
-    
+
 
 def api_exception_handelr(request, exc, api):
     return api.create_response(
         request,
-        {  
+        {
             "code": exc.code,
             "message": exc.message,
         },
         status=exc.status_code,
     )
+
 
 class APIException(Exception):
     success: bool
@@ -110,14 +117,13 @@ class APIException(Exception):
         *,
         errorDetail: Error.ErrorDetail,
         ex: Exception = None,
-    ):  
+    ):
         self.success = False
         self.status_code = errorDetail.status_code
         self.code = errorDetail.code
         self.message = errorDetail.message
         self.ex = ex
         super().__init__(ex)
-
 
 
 class NotAuthenticated(APIException):
@@ -184,8 +190,7 @@ class NotFoundStudent(APIException):
     def __init__(self, ex: Exception = None):
         super().__init__(ex=ex, errorDetail=Error.not_found_student)
 
+
 class NotFoundColumn(APIException):
     def __init__(self, ex: Exception = None):
         super().__init__(ex=ex, errorDetail=Error.not_found_column)
-
-
