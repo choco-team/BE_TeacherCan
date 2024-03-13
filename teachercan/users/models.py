@@ -1,29 +1,49 @@
-from django.db import models
+from django.db import models, IntegrityError
 from django.contrib.auth.models import (
     AbstractBaseUser,
     PermissionsMixin,
     BaseUserManager,
 )
-from django.core.validators import EmailValidator
+from django.core.validators import validate_email
 from django.contrib.auth.validators import (
     ASCIIUsernameValidator,
     UnicodeUsernameValidator,
 )
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+from ninja.errors import ValidationError as NinjaValidationError
+
+import config.exceptions as ex
 
 
 class UserManager(BaseUserManager):
-    def _create_user(self, email, password, **extra_fields):
+    def _create_user(self, email, password, nickname, **extra_fields):
         if not email:
             raise ValueError("email를 입력해주세요.")
-        user = self.model(email=email, **extra_fields)
+        # email 유효성 검사
+        try:
+            validate_email(email)
+        except ValidationError as e:
+            raise NinjaValidationError(e.messages)
+        # 닉네임 유효성 검사
+        try:
+            validate_nickname = UnicodeUsernameValidator()
+            validate_nickname(nickname)
+        except ValidationError as e:
+            raise NinjaValidationError(e.messages)
+        user = self.model(email=email, nickname=nickname, **extra_fields)
+        # 비밀번호 유효성 검사
         try:
             validate_password(password)
-        except:
-            raise ValueError("비밀번호 유효성 검사 실패")
+        except ValidationError as e:
+            raise NinjaValidationError(e.messages)
         user.set_password(password)
-        user.save(using=self.db)
+        # email 중복 검사
+        try:
+            user.save(using=self.db)
+        except IntegrityError as e:
+            raise ex.email_already_exist
         return user
 
     def create_user(self, email=None, password=None, **extra_fields):
@@ -36,9 +56,15 @@ class UserManager(BaseUserManager):
             raise ValueError("is_superuser=True일 필요가 있습니다.")
         return self._create_user(email, password, **extra_fields)
 
+    def has_user(self, email=None):
+        try:
+            self.get(email=email)
+        except:
+            return False
+        return True
+
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email_validator = EmailValidator()
     nickname_validator = UnicodeUsernameValidator()
     user_id_validator = ASCIIUsernameValidator()
 
@@ -48,7 +74,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         null=False,
         help_text=_("이메일을 입력해주세요."),
-        validators=[email_validator],
+        validators=[validate_email],
         error_messages={
             "unique": _("이미 해당 이메일로 회원가입 되었습니다."),
         },
