@@ -67,50 +67,28 @@ class Error:
         "/api/auth/signup/validation": ErrorDetail(1101, "이메일이 형식이 올바르지 않아요."),
     }
 
+def response_exception_handelr(request, exc, api):
+    data = {
+        "path": request.path,
+        "method": request.method,
+    #     "path_params": request.path_params or None,
+    #     "query_params": str(request.content_params) or None,
+    #     "body": exc.body if hasattr(exc, "body") else None,
+    }
+    print("💣 서버 에러 발생!!!!\n", data)
+    print("@@@@@@@@@", dir(exc), "\n", exc.args)
 
-# async def request_exception_handelr(request: Request, exc: RequestValidationError):
-#     path = request.url.path
-#     error = Error.path.get(path)
-#     if not error:
-#         return JSONResponse(
-#             status_code=Error.request_default_error.status_code,
-#             content={
-#                 "result": False,
-#                 "code": Error.request_default_error.code,
-#                 "message": Error.request_default_error.message,
-#                 "data": exc.errors(),
-#             },
-#         )
-#     return JSONResponse(
-#         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-#         content={
-#             "result": False,
-#             "code": error.code,
-#             "message": error.message,
-#             "data": exc.errors(),
-#         },
-#     )
+    return api.create_response(
+        request,
+        {  
+            "code": 123,
+            "message": "response_exception_handelr",
+        },
+        status=503,
+    )
+    
 
-# def response_exception_handelr(request, exc, api):
-#     data = {
-#         # "path": request.url.path,
-#         "method": request.method,
-#         # "path_params": request.path_params or None,
-#         # "query_params": str(request.query_params) or None,
-#         "body": exc.body if hasattr(exc, "body") else None,
-#     }
-#     print("💣 서버 에러 발생!!!!\n", data)
-#     return api.create_response(
-#         request,
-#         {            
-#             "code": Error.server_error.code,
-#             "message": Error.server_error.message,
-#             "data": data,
-#         },
-#         status=exc.status_code,
-#     )
-
-def api_exception_handelr(request, exc: "APIException", api):
+def api_exception_handelr(request, exc, api):
     return api.create_response(
         request,
         {  

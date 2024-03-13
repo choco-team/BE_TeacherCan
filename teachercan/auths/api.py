@@ -29,8 +29,7 @@ from pydantic import EmailStr
 
 class Asd(Schema):
     email: EmailStr
-    social_id:str
-
+    social_id: str
 
 # 1.이메일 중복검사
 @router.post("/signup/validation")
@@ -39,9 +38,10 @@ def is_email_usable(request, email: EmailIn):
     `이메일 중복검사`
     """
     user_count = User.objects.filter(email=email.email).count()
+    user = User.objects.get(id=1)
     if user_count:
         raise ex.EmailAlreadyExist()
-    return "이 이메일은 사용할 수 있어요."
+    return "사용 가능한 아이디입니다."
 
 
 
