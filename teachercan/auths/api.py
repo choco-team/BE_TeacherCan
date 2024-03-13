@@ -28,7 +28,7 @@ router = Router(tags=["Auth"])
 
 class UserOut (Schema):
     email: EmailStr
-    social_id: str
+    social_id: int
 
 
 class UserIn (Schema):
@@ -38,7 +38,7 @@ class UserIn (Schema):
 @router.get("/test/{id}", response=UserOut)
 def asd(request, id: int):
     user = User.objects.get(id=id)
-    raise ValueError("test")
+    # raise ValueError("test")
     return user
 
 # 1.이메일 중복검사

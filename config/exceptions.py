@@ -75,14 +75,16 @@ class Error:
 
 def exception_handelr(request, exc, api):
     data = {
-        "detail": f"{exc.args[0]} {str(exc.__context__)}" or None,
-        "path": request.path or None,
-        "method": request.method or None,
-        "path_params": request.resolver_match.kwargs or None,
-        "query_params": request.environ['QUERY_STRING'] or None,
-        "body": request.body.decode() or None,
+        "detail": f"{exc.args} {str(exc.__context__)}",
+        "path": request.path,
+        "method": request.method,
+        "path_params": request.resolver_match.kwargs,
+        "query_params": request.environ['QUERY_STRING'],
+        "body": request.body.decode(),
     }
     print("💣 서버 에러 발생!!!!\n", data)
+    print(type(exc))
+
     return api.create_response(
         request,
         {
