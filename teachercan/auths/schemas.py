@@ -5,6 +5,9 @@ from pydantic import EmailStr
 class EmailIn(Schema):
     email: EmailStr
 
+class EmailOut(Schema):
+    email: EmailStr
+    social_id: int
 
 class SignUpIn(Schema):
     email: EmailStr

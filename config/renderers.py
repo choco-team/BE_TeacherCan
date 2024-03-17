@@ -1,32 +1,5 @@
-# import json
-
-# from ninja.renderers import JSONRenderer
 from rest_framework.status import is_success
-
-
-# class DefaultRenderer(JSONRenderer):
-#     def render(self, request, *, response_status):
-#         if "detail" in request:
-#             print(request)
-#             res = {
-#                 "success": False,
-#                 "code": 400,
-#                 "message": request['detail'],
-#                 "data": None,
-#             }
-#         else:
-#             success = is_success(response_status)
-#             res = {
-#                 "success": True if success else False,
-#                 "code": 2000 if success else request['code'],
-#                 "message": request if type(request) == str else (None if success else request['message']),
-#                 "data": request if success and type(request) != str else None,
-#             }
-#         return json.dumps(res)
-
-
 import json
-
 from ninja.renderers import JSONRenderer
 
 
@@ -36,7 +9,16 @@ class DefaultRenderer(JSONRenderer):
         res = {
             "success": success,
             "code": 2000 if success else data['code'],
-            "message": data if type(data) == str else (None if success else data['message']),
-            "data": None if type(data) == str else (data if success else data['data'])
+            "message": None,
+            "data": None
         }
+        if success:
+            if type(data) == str:
+                res["message"] = data
+            else:
+                res["data"] = data
+        else:
+            res["message"] = data['message']
+            if "data" in data:
+                res["data"] = data['data']
         return json.dumps(res, cls=self.encoder_class, **self.json_dumps_params)
