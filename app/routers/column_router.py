@@ -21,7 +21,7 @@ async def get_colomn_list_router(studentListId: int, db = Depends(get_verified_d
 
 
 
-@router.post('/', response_model=ResponseModel[column_schema.PostColumnRes])
+@router.post('', response_model=ResponseModel[column_schema.PostColumnRes])
 async def post_column_router(postColumn: column_schema.PostColumnReq,  db = Depends(get_verified_db)):
     column = column_crud.create_column(
         db=db, 
@@ -36,7 +36,7 @@ async def post_column_router(postColumn: column_schema.PostColumnReq,  db = Depe
         )
     return ResponseWrapper(column_schema.PostColumnRes(column_id=column.id))
 
-@router.put('/', response_model=ResponseModel[str])
+@router.put('', response_model=ResponseModel[str])
 async def put_column_router(column_update: column_schema.ColumnWithId,  db = Depends(get_verified_db)):
     column_crud.update_column(
         db = db,
@@ -45,6 +45,6 @@ async def put_column_router(column_update: column_schema.ColumnWithId,  db = Dep
     return ResponseWrapper("성공적으로 수정되었어요.")
 
 
-@router.delete('/', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_column_router(id: int,  db = Depends(get_verified_db)):
     column_crud.delete_column(db=db, column_id = id)

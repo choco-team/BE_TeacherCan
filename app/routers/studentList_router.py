@@ -17,7 +17,7 @@ router = APIRouter(prefix="/student/list", tags=["StudentList"])
 
 # 명렬표
 @router.get(
-    "/", status_code=200, response_model=ResponseModel[studentList_schemas.GetStudentList]
+    "", status_code=200, response_model=ResponseModel[studentList_schemas.GetStudentList]
 )
 def student_list(user: User = Depends(user)):
     """
@@ -76,7 +76,7 @@ def student_list(list_id: int, user: str = Depends(user)):
 
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
     response_model=ResponseModel[studentList_schemas.StudentListWithStudent],
 )
@@ -197,7 +197,7 @@ def put_student_list_main(
 
 
 @router.put(
-    "/",
+    "",
     status_code=status.HTTP_200_OK,
     response_model=ResponseModel[studentList_schemas.StudentListWithStudent],
 )
