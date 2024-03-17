@@ -162,26 +162,15 @@ def student_list(
     status_code=status.HTTP_200_OK,
     response_model=ResponseModel[str],
 )
-<<<<<<< HEAD:app/routers/studentList_router.py
 def put_student_list_main(
     update_main: studentList_schemas.UpdateMain,
     user: str = Depends(user)
 ):
-=======
-def put_student_list_main(update_main: schemas.UpdateMain, user: str = Depends(user)):
->>>>>>> dev:app/routers/student_list.py
     try:
         updated_student_list = StudentList.objects.get(id=update_main.id, user=user)
         tmp = StudentList.objects.get(user=user, is_main=True)
     except ObjectDoesNotExist:
-<<<<<<< HEAD:app/routers/studentList_router.py
-        print("Asdajdnakd")
-        raise ex.NotExistStudentList()  
-    
-=======
         raise ex.NotExistStudentList()
-
->>>>>>> dev:app/routers/student_list.py
     tmp.is_main = False
     updated_student_list.is_main = update_main.isMain
     tmp.save()
@@ -320,9 +309,6 @@ def student_list(
 #         ]
 #     }
 #     """
-<<<<<<< HEAD:app/routers/studentList_router.py
-#     return ResponseWrapper(crud.update_column(db, column, token_email))
-=======
 #     return ResponseWrapper(crud.update_column(db, column, token_email))
 
 
@@ -374,4 +360,3 @@ def student_list(
 #     token_email: str = Depends(user_email),
 # ):
 #     return ResponseWrapper(crud.delete_student(db, token_email, student_id))
->>>>>>> dev:app/routers/student_list.py

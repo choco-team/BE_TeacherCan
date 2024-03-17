@@ -2,6 +2,11 @@ from ninja import NinjaAPI
 from config.renderers import DefaultRenderer
 from teachercan.auths.api import router as auth_router
 from teachercan.users.api import router as user_router
+from teachercan.students.api import router as student_router
+from teachercan.schools.api import router as school_router
+from teachercan.student_lists.api import router as student_list_router
+
+
 from ninja.errors import AuthenticationError, ValidationError
 
 from config import exceptions as ex
@@ -32,3 +37,7 @@ def exception_handelr(request, exc):
 
 api.add_router("/auth/", auth_router)
 api.add_router("/user/", user_router)
+api.add_router("/student/", student_router)
+api.add_router("/school/", school_router)
+api.add_router("/student/list/", student_list_router)
+

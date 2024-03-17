@@ -8,7 +8,7 @@ from jwt import encode, decode
 
 from config.settings import JWT_ALGORITHM, JWT_SECRET
 from teachercan.users.models import User
-from teachercan.auths import schemas
+from .schemas import EmailIn, SignUpIn, SignInIn
 import config.exceptions as ex
 
 
@@ -28,21 +28,18 @@ router = Router(tags=["Auth"])
 
 # 1.이메일 중복검사
 @router.post("/signup/validation")
-def is_email_usable(request, payload: schemas.EmailIn):
+def is_email_usable(request, payload: EmailIn):
     """
     `이메일 중복검사`
     """
-    user_count = User.objects.filter(email=payload.email).count()
-    if user_count:
+    if User.objects.has_user(payload.email):
         raise ex.email_already_exist
-    # if User.objects.has_user(payload.email):
-    #     raise ex.email_already_exist
-    return "사용 가능한 이메일입니다."
+    return "이 이메일은 사용할 수 있어요."
 
 
 # 2.회원가입
 @router.post("/signup")
-def signup(request, user: schemas.SignUpIn):
+def signup(request, user: SignUpIn):
     """
     `회원가입`
     """
@@ -54,7 +51,7 @@ def signup(request, user: schemas.SignUpIn):
 
 # 3.로그인
 @router.post("/signin")
-def signin(request, user: schemas.SignInIn):
+def signin(request, user: SignInIn):
     """
     `로그인`
     """
@@ -68,6 +65,6 @@ def signin(request, user: schemas.SignInIn):
             JWT_SECRET,
             JWT_ALGORITHM,
         )
-        return {"token" : token}
+        return {"token": token}
 
     return "로그인 실패"
