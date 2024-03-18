@@ -25,7 +25,7 @@ class Student(models.Model):
     )
 
     student_list = models.ForeignKey(
-        to="student_lists.StudentList", on_delete=models.CASCADE, db_column="list_id"
+        to="student_lists.StudentList", on_delete=models.CASCADE, db_column="list_id", related_name='students'
     )
     allergy = models.ManyToManyField(to="Allergy", through="StudentAllergyRelation")
 
@@ -36,7 +36,7 @@ class Student(models.Model):
 class Column(models.Model):
     field = models.CharField(max_length=20)
     student_list = models.ForeignKey(
-        to="student_lists.StudentList", on_delete=models.CASCADE, null=True
+        to="student_lists.StudentList", on_delete=models.CASCADE, null=True, related_name='columns'
     )
 
     class Meta:
@@ -45,8 +45,8 @@ class Column(models.Model):
 
 class Row(models.Model):
     value = models.CharField(max_length=100)
-    column = models.ForeignKey(to="Column", on_delete=models.CASCADE)
-    student = models.ForeignKey(to="Student", on_delete=models.CASCADE)
+    column = models.ForeignKey(to="Column", on_delete=models.CASCADE, related_name='rows')
+    student = models.ForeignKey(to="Student", on_delete=models.CASCADE, related_name='rows')
 
     class Meta:
         db_table = "student_list_row"

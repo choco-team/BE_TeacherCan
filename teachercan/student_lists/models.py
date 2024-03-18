@@ -9,7 +9,8 @@ class StudentList(models.Model):
     has_allergy = models.BooleanField(default=False)
     description = models.CharField(null=True, max_length=200)
 
-    user = models.ForeignKey(to="users.User", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        to="users.User", on_delete=models.CASCADE, related_name='studentLists')
 
     class Meta:
         db_table = "student_list"

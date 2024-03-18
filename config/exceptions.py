@@ -107,19 +107,23 @@ not_regist_school = APIException(
 )
 
 # Student
-not_found_student_list = APIException(
-    1401, "요청하신 명렬표가 존재하지 않아요.", status.HTTP_404_NOT_FOUND
-)
-not_exist_student_list = APIException(
-    1402, "등록된 명렬표가 없어요. 먼저 명렬표를 등록해주세요.", status.HTTP_404_NOT_FOUND
-)
 not_found_student = APIException(
     1403, "해당하는 학생이 존재하지 않아요.", status.HTTP_404_NOT_FOUND
+)
+
+# StudentList
+not_found_student_list = APIException(
+    1401, "요청하신 명렬표가 존재하지 않아요.", status.HTTP_404_NOT_FOUND
 )
 
 # Column
 not_found_column = APIException(
     1501, "요청하신 column이 존재하지 않아요.", status.HTTP_404_NOT_FOUND
+)
+
+# Row
+not_found_row = APIException(
+    1601, "요청하신 row가 존재하지 않아요.", status.HTTP_404_NOT_FOUND
 )
 
 # 유효성 검사
