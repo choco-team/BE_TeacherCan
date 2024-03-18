@@ -52,7 +52,7 @@ LOCAL_APPS = [
     "teachercan.students",
     "teachercan.schools",
     "teachercan.student_lists",
-
+    "teachercan.columns",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

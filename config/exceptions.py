@@ -79,6 +79,8 @@ not_authenticated = APIException(
     1001, "로그인이 필요한 서비스예요.", status.HTTP_403_FORBIDDEN)
 invalid_token = APIException(
     1002, "유효하지 않은 토큰이에요.", status.HTTP_403_FORBIDDEN)
+not_access_permission = APIException(
+    1003, "접근 권한이 없는 id에요.", status.HTTP_403_FORBIDDEN)
 
 # Auth
 email_already_exist = APIException(

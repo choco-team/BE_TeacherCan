@@ -33,19 +33,9 @@ class Student(models.Model):
         db_table = "student"
 
 
-class Column(models.Model):
-    field = models.CharField(max_length=20)
-    student_list = models.ForeignKey(
-        to="student_lists.StudentList", on_delete=models.CASCADE, null=True, related_name='columns'
-    )
-
-    class Meta:
-        db_table = "student_list_column"
-
-
 class Row(models.Model):
     value = models.CharField(max_length=100)
-    column = models.ForeignKey(to="Column", on_delete=models.CASCADE, related_name='rows')
+    column = models.ForeignKey(to="columns.Column", on_delete=models.CASCADE, related_name='rows')
     student = models.ForeignKey(to="Student", on_delete=models.CASCADE, related_name='rows')
 
     class Meta:

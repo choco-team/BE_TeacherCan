@@ -1,4 +1,5 @@
-from teachercan.students.models import Allergy, Column, Row, Student
+from teachercan.students.models import Allergy, Row, Student
+from teachercan.columns.models import Column
 from . import schemas
 from .models import StudentList
 from ..auths.api import AuthBearer

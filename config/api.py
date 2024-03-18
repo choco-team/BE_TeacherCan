@@ -5,6 +5,7 @@ from teachercan.users.api import router as user_router
 from teachercan.students.api import router as student_router
 from teachercan.schools.api import router as school_router
 from teachercan.student_lists.api import router as student_list_router
+from teachercan.columns.api import router as column_router
 
 
 from ninja.errors import AuthenticationError, ValidationError
@@ -40,4 +41,4 @@ api.add_router("/user/", user_router)
 api.add_router("/student/", student_router)
 api.add_router("/school/", school_router)
 api.add_router("/student/list/", student_list_router)
-
+api.add_router("/column/", column_router)
