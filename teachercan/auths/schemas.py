@@ -1,4 +1,4 @@
-from ninja import Schema
+from ninja import Schema, Field
 from pydantic import EmailStr
 
 
@@ -8,8 +8,8 @@ class EmailIn(Schema):
 
 class SignUpIn(Schema):
     email: EmailStr
-    password: str
-    nickname: str
+    password: str = Field(max_length=20)
+    nickname: str = Field(max_length=50)
 
 
 class SignInIn(Schema):
