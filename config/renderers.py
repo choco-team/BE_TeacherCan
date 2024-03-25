@@ -8,7 +8,11 @@ class DefaultRenderer(JSONRenderer):
         is_success = response_status < 400
         res = {
             "success": is_success,
-            "code": 2000 if is_success else data["code"],
+            "code": (
+                2000
+                if is_success
+                else data["code"] if "code" in data else response_status
+            ),
         }
         if "message" in data:
             res.update(

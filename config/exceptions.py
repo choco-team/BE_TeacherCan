@@ -52,7 +52,7 @@ def validation_exception_handelr(request, exc, api):
     return api.create_response(
         request,
         {"code": 1000, "message": "유효성 검사에서 문제가 발생했어요.", "data": data},
-        status=500,
+        status=422,
     )
 
 
