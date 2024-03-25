@@ -44,14 +44,15 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
-
 THIRD_PARTY_APPS = []
 
 LOCAL_APPS = [
     "teachercan.auths",
     "teachercan.users",
-    "teachercan.schools",
     "teachercan.students",
+    "teachercan.schools",
+    "teachercan.student_lists",
+    "teachercan.columns",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

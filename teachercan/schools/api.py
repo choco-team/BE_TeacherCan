@@ -53,7 +53,6 @@ def api_search_schools(
                 "total_page_number": -(-total // data_size),
             },
         }
-        print(res)
         return res
 
     except:
@@ -70,7 +69,7 @@ def api_search_schools(
 
 
 def create_school(code: str) -> School:
-    school = api_search_schools(page_number=1, data_size=1, code=code)[0]
+    school = api_search_schools(page_number=1, data_size=1, code=code)["school_list"][0]
     db_school = School(
         code=code,
         name=school["name"],

@@ -5,9 +5,10 @@ from ninja.renderers import JSONRenderer
 
 class DefaultRenderer(JSONRenderer):
     def render(self, request, data, *, response_status):
+        is_success = response_status < 400
         res = {
-            "success": response_status < 400,
-            "code": data["code"] if "code" in data else response_status,
+            "success": is_success,
+            "code": 2000 if is_success else data["code"],
         }
         if "message" in data:
             res.update(

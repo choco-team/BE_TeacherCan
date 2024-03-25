@@ -91,7 +91,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[nickname_validator],
     )
     school = models.ForeignKey(
-        to="schools.School", null=True, blank=True, on_delete=models.SET_NULL
+        to="schools.School",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="users",
     )
     gender = models.CharField(
         null=True, max_length=2, choices=[("남", "남"), ("여", "여")], default="남"
