@@ -9,7 +9,7 @@ def api_exception_handelr(request, exc, api):
     )
 
 
-def exception_handelr(request, exc, api):
+def exception_handelr(request, exc, api, status = 500, code = 1000):
     data = {
         "detail": None,
         "path": request.path,
@@ -27,12 +27,21 @@ def exception_handelr(request, exc, api):
     except:
         data["detail"] = f"{exc.__str__()} {str(exc.__context__)}"
     print("💣 서버 에러 발생!!!!\n", data)
+    try:
+        return api.create_response(
+            request,
+            {"code": code, "message": "서버에서 에러가 발생했어요.", "data": data},
+            status=status,
+        )
+    except:
+        # 모델을 반환 하는 api에서, 응답 스키마 변수명이 모델에 없는 컬럼일 때 발생
+        data["detail"]['input'] = ""
+        return api.create_response(
+            request,
+            {"code": code, "message": "서버에서 에러가 발생했어요.", "data": data},
+            status=status,
+        )
 
-    return api.create_response(
-        request,
-        {"code": 1000, "message": "서버에서 에러가 발생했어요.", "data": data},
-        status=500,
-    )
 
 
 def validation_exception_handelr(request, exc, api):

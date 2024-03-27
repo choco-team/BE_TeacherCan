@@ -1,5 +1,6 @@
+from django.template import TemplateSyntaxError
 from ninja import NinjaAPI
-from ninja.errors import AuthenticationError, ValidationError
+from ninja.errors import AuthenticationError, ValidationError, HttpError
 
 from config import exceptions as ex
 from config.renderers import DefaultRenderer
@@ -39,6 +40,11 @@ def exception_handelr(request, exc):
 def exception_handelr(request, exc):
     return ex.exception_handelr(request, exc, api)
 
+
+# HttpError (requestbody json 형식이 잘못 됐을 때 발생)
+@api.exception_handler(HttpError)
+def exception_handelr(request, exc):
+    return ex.exception_handelr(request, exc, api, status=400, code=1002)
 
 api.add_router("/auth/", auth_router)
 api.add_router("/user/", user_router)
